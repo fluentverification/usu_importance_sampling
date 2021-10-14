@@ -37,6 +37,9 @@ package imsam;  // Importance Sampling package
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 import parser.Values;
 import parser.ast.Expression;
@@ -62,7 +65,7 @@ public class runPath
 
 	public static void main(String[] args)
 	{
-		new SimulateModel().run();
+		new runPath().run();
 	}
 
 	public void run()
@@ -84,7 +87,14 @@ public class runPath
 			prism.loadModelIntoSimulator();
 			SimulatorEngine sim = prism.getSimulator();
 			
-			FileReader pathFile = new FileReader("models/cycle_ssa.traces");
+			FileReader fr = new FileReader("models/cycle_ssa.traces");
+			BufferedReader br=new BufferedReader(fr);
+			String x;
+			
+			x=br.readLine(); 
+			
+
+			String[] tr_st=x.split("\\s+"); 
 
 			// Create a new path and take 3 random steps
 			// (for debugging purposes, we use sim.createNewPath;
@@ -92,27 +102,25 @@ public class runPath
 			sim.createNewPath();
 			sim.initialisePath(null);
 
-			int[] tr={0,0,1,1,0,1,0,1,0,0,0};
-			String[] tr_st = {"[e1]", "[e1]", "[e2]", "[e2]", "[e1]", "[e2]", "[e1]", "[e2]", "[e1]", "[e1]", "[e1]"};
 			int index;
 			double path_probability = 1.0;
 			double total_rate = 0.0;
-			for (int tdx=0; tdx < tr.length; tdx++) {
+			for (int tdx=1; tdx < tr_st.length; tdx++) {
 			    index=-1;
 			    for (int idx=0; idx<sim.getNumTransitions(); idx++) {
 				System.out.printf("tr %d: %s %f\n",idx,sim.getTransitionActionString(idx),sim.getTransitionProbability(idx));
 				total_rate += sim.getTransitionProbability(idx);
 			    }
 			    for (int idx=0; idx<sim.getNumTransitions(); idx++) {
-				String s1 = tr_st[tdx];
+				String s1 = String.format("[%s]",tr_st[tdx]);
 				String s2 = sim.getTransitionActionString(idx);
-				//System.out.printf("%d:%s=%s?",idx,s1,s2);
-				if (s1.compareTo(s2)==0) {
+				System.out.printf("%d:%s=%s?",idx,s1,s2);
+				if (s1.equalsIgnoreCase(s2)) {
 				    index = idx;
-				    //  System.out.printf(" yes.");
+				    System.out.printf(" yes.");
 				    break;
 				}
-				//System.out.printf("\n");
+				System.out.printf("\n");
 			    }			    
 			    double transition_probability = sim.getTransitionProbability(index)/total_rate;
 			    System.out.printf("\n======= tr %s (%d) %e ===========\n",tr_st[tdx],index,transition_probability);
@@ -136,6 +144,11 @@ public class runPath
 		} catch (PrismException e) {
 			System.out.println("Error: " + e.getMessage());
 			System.exit(1);
+		}
+		catch (IOException e) {
+		    System.out.println("Error: " + e.getMessage());
+		    System.exit(1);
+		    
 		}
 	}
 }
