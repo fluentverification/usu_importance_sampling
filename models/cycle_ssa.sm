@@ -1,0 +1,27 @@
+ctmc
+
+const double k1 = 1.0; 
+const double k2 = 1.0; 
+const double k3 = 0.1;
+const double k4 = 1.0;
+const double k5 = 1.0;
+const double k6 = 0.1;
+
+module cycle
+
+	s1 : int init 1;
+	s2 : int init 50;
+	s3 : int init 0;
+	s4 : int init 1;
+	s5 : int init 50;
+	s6 : int init 0;
+
+
+	[R_one]   s1>0 & s2>0 -> k1 * s1 * s2 : (s3' = s3+1) & (s1' = s1-1) & (s2'=s2-1);
+	[R_two]   s3>0        -> k2 * s3      : (s1' = s1+1) & (s2' = s2+1) & (s3'=s3-1);
+	[R_three] s3>0        -> k3 * s3      : (s1' = s1+1) & (s5' = s5+1) & (s3'=s3-1);
+	[R_four]  s4>0 & s5>0 -> k4 * s4 * s5 : (s6' = s6+1) & (s4' = s4-1) & (s5'=s5-1);
+	[R_five]  s6>0        -> k5 * s6      : (s4' = s4+1) & (s5' = s5+1) & (s6'=s6-1);
+	[R_six]   s6>0        -> k6 * s6      : (s4' = s4+1) & (s2' = s2+1) & (s6'=s6-1);
+
+endmodule
