@@ -33,7 +33,7 @@
 //	
 //==============================================================================
 
-package imsam;  // Importance Sampling package
+//package imsam;  // Importance Sampling package
 
 import java.io.File;
 import java.io.FileNotFoundException;
