@@ -107,6 +107,7 @@ public class runPath
 			double total_rate = 0.0;
 			for (int tdx=1; tdx < tr_st.length; tdx++) {
 			    index=-1;
+			    total_rate = 0.0;
 			    for (int idx=0; idx<sim.getNumTransitions(); idx++) {
 				System.out.printf("tr %d: %s %f\n",idx,sim.getTransitionActionString(idx),sim.getTransitionProbability(idx));
 				total_rate += sim.getTransitionProbability(idx);

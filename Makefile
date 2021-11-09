@@ -15,7 +15,7 @@ CLASS_FILES = $(JAVA_FILES:%.java=classes/%.class)
 
 default: all
 
-all: init api $(CLASS_FILES) test
+all: $(CLASS_FILES) test
 
 .PHONY: init api test
 
