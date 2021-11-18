@@ -42,7 +42,7 @@ and/or mean time to reach state N.
 models/abstract/2_states/2_state.pm
 ```
 
-![Trivial two-state model.](../models/abstract/2_states/2_state.png)
+![Trivial two-state model.](../models/abstract/2_states/2_state.dot.png)
 
 The trivial two-state model has only one possible transition 
 which occurs with probability 1. There is a single path.
@@ -55,7 +55,7 @@ which occurs with probability 1. There is a single path.
 models/abstract/3_states/3_state.pm
 ```
 
-![Three-state model.](../models/abstract/3_states/3_state.png)
+![Three-state model.](../models/abstract/3_states/3_state.dot.png)
 
 A general three-state model has two non-regenerative 
 paths that terminate in state 3:
