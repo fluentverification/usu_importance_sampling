@@ -36,7 +36,7 @@ classes/%.class: src/%.java
 # Test execution
 
 test:
-	PRISM_DIR=$(PRISM_DIR) PRISM_MAINCLASS=runPath prism-api/bin/run
+	export PRISM_DIR=$(PRISM_DIR); export PRISM_MAINCLASS=learnedRouteImportanceSampling; bash -x prism-api/bin/run
 
 # Clean up
 
