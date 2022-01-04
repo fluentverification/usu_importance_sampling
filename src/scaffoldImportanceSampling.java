@@ -48,8 +48,9 @@ import simulator.SimulatorEngine;
 */
 public class scaffoldImportanceSampling
 {
-    public static double             M = 2; // transition multiplier
-    public static int                TMAX = 1000000; // maximum transitions before truncating
+    public static double             M       = 15; // transition multiplier
+    public static int                TMAX    = 10; // maximum transitions before truncating
+    public static int                Nruns   = 10000; // Number of stochastic runs
     public static ArrayList<Integer> catalog = new ArrayList<Integer>();
 
     public static String             catalogFileName;
@@ -74,21 +75,42 @@ public class scaffoldImportanceSampling
 	if (args.length > 0) 
 	    modelFileName = args[0];
 	else
-	    modelFileName = new String("models/abstract/3_states/3_state.pm");
+	    modelFileName = new String("models/abstract/5_states/5_states.pm");
 	if (args.length > 1) 
 	    modelFileName = args[1];
 	else
-	    catalogFileName = new String("models/abstract/3_states/3_state.is");
+	    catalogFileName = new String("models/abstract/5_states/5_states.is");
 
 	if (args.length > 2) 
 	    TMAX = Integer.parseInt(args[2]);
-	else
-	    TMAX=3;
-
+	
 	loadModel();
 	loadCatalog();
 	printCatalog();
-	run();
+
+	double sum       = 0.0;
+	double squareSum = 0.0;
+
+	ArrayList samples = new ArrayList<Double>(Nruns);
+	for (int n=0; n<Nruns; n++) {
+	    double sample = run();
+	    sum += sample;
+
+	    samples.add(sample);
+	    //System.out.println(sim.getPath());
+	    //System.out.println("=================");
+	}	    
+	
+	prism.closeDown();
+
+	double mean = sum/(double)Nruns;
+
+	for (int n=0; n<Nruns; n++) {
+	    double squareTerm = (double)samples.get(n) - mean;
+	    squareSum += squareTerm*squareTerm; 
+	}
+	double variance = squareSum/((double)Nruns*((double)Nruns-1));
+	System.out.println("Probability to reach final state: " + mean + ", Variance " + variance);
     }
 
     public static void loadModel() 
@@ -152,147 +174,129 @@ public class scaffoldImportanceSampling
 	    System.exit(1);
 	}
     }
-    public static void run()
-	{
-	    try {
 
-		sim.createNewPath();
-		sim.initialisePath(null);
+    public static void addToCatalog(Integer s)
+    {
+	if (catalog.indexOf(s) == -1)
+	    catalog.add(s);
+    }
 
-		System.out.println("Generating Path:");
-		System.out.println("Initial state " + sim.getCurrentState());
+    public static Boolean inCatalog(Integer s)
+    {
+	if (catalog.indexOf(s) == -1)
+	    return false;
+	else
+	    return true;
+    }
 
-		double path_probability = 1.0;
-		double modified_probability = 1.0;
-		double total_rate = 0.0;
-		double modified_total_rate = 0.0;
 
+    public static Boolean satisfyCatalogCondition(Integer currentState, Integer targetState)
+    {
+	if (inCatalog(targetState) && !inCatalog(currentState))
+	    return true;
+	else
+	    return false;
+    }
+
+
+    public static double run()
+    {
+	try {
+	    sim.createNewPath();
+	    sim.initialisePath(null);
+
+	    double path_probability     = 1.0;
+	    double modified_probability = 1.0;
+	    double total_rate           = 0.0;
+	    double modified_total_rate  = 0.0;
+
+	    ArrayList visitedStates = new ArrayList<Double>(TMAX);
+
+	    // Simulate a path step-by-step:
+	    for (int tdx=0; tdx < TMAX; tdx++) {
+		// Initialize variables:
+		total_rate          = 0.0; 
+		modified_total_rate = 0.0;
+
+		// Loop through the possible transitions from the current state:
+		Integer   numTransitions  = sim.getNumTransitions();
+		ArrayList transitionRates = new ArrayList<Double>(numTransitions);
+		ArrayList nativeRates     = new ArrayList<Double>(numTransitions);
+		Integer   currentState    = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
 		
-		// Simulate a path step-by-step:
-		for (int tdx=0; tdx < TMAX; tdx++) {
-		    // Initialize variables:
-		    total_rate = 0.0; 
-		    modified_total_rate = 0.0;
+		if (visitedStates.indexOf(currentState) == -1)
+		    visitedStates.add(currentState);
 
-		    // Loop through the possible transitions from the current state:
-		    Integer numTransitions  = sim.getNumTransitions();
-		    ArrayList transitionRates = new ArrayList<Double>(numTransitions);
-		    ArrayList nativeRates = new ArrayList<Double>(numTransitions);
+		if (numTransitions > 0) {			
+		    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+		    // Adjust Transition Rates 			
+		    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+		    for (int idx=0; idx<numTransitions; idx++) { 
+			// Get target state of the indexed transition:
+			Integer transitionTarget = Integer.parseInt(sim.computeTransitionTarget(idx).toStringNoParentheses());
+			if (satisfyCatalogCondition(currentState,transitionTarget))
+			    addToCatalog(currentState);
 
-		    if (numTransitions > 0) {
-			System.out.println(numTransitions + " transitions:");
+			transitionRates.add(sim.getTransitionProbability(idx));
+			nativeRates.add(sim.getTransitionProbability(idx));
+			total_rate += (double) sim.getTransitionProbability(idx);
 
-			for (int idx=0; idx<numTransitions; idx++) { 
-
-			    // Get target state of the indexed transition:
-			    Integer transitionTarget = Integer.parseInt(sim.computeTransitionTarget(idx).toStringNoParentheses());
-
-			    // Report if the target is in the catalog:
-			    String inCatalog;
-
-			    transitionRates.add(sim.getTransitionProbability(idx));
-			    nativeRates.add(sim.getTransitionProbability(idx));
-
-			    // Accumulate total rate:
-			    total_rate += (double) sim.getTransitionProbability(idx);
-
-			    if (catalog.indexOf(transitionTarget) > -1) {
-				inCatalog = new String("(in catalog)");
-				transitionRates.set(idx, M*(double)transitionRates.get(idx));
-			    }
-			    else {
-				inCatalog = new String("(NOT in catalog)");
-			    }
-
-			    modified_total_rate += (double) transitionRates.get(idx);
-
-
-			    // Print info string:
-			    System.out.printf("  -> %d %s with probability %e\n", transitionTarget, inCatalog, sim.getTransitionProbability(idx));
-
+			if (inCatalog(transitionTarget) && (visitedStates.indexOf(transitionTarget) == -1)) { 
+			    transitionRates.set(idx, M*(double)transitionRates.get(idx));
 			}
-		
-			// Save current state then run a transition:
-			Integer currentState = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-
-			// |---------|----|------|-x--|-------|-----|  
-			// 0                                        Sum(Rate)
-
-
-			double tot = 0.0;
-			int offset = 0;
-
-			double x = rng.randomUnifDouble(modified_total_rate);
-
-			for (offset = 0; x >= tot && offset < numTransitions; offset++) {
-			    tot += (double) transitionRates.get(offset);
-			}
-			offset -= 1;
-
-			// -----------------------
-			// executeTimedTransition is private; changed to "manualTransition" below. Much simpler.
-			//------------------------
-			//		    int i = sim.getChoiceIndexOfTransition(offset);
-			//		    sim.executeTimedTransition(i, offset, rng.randomExpDouble(total_rate), -1);   // <-- execute a transition
-
-			if ((offset < numTransitions)&&(offset >= 0)) {
-			
-			    // Get the new state:
-			    Integer transitionTarget = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-			    
-			    // If the target is in the catalog but the preceding state is not, add the preceding state into the catalog:
-			    if ((catalog.indexOf(transitionTarget) > -1) && (catalog.indexOf(currentState) == -1)) 
-				catalog.add(currentState);
-			    
-			    
-			    // Print transition summary:
-			    //PathFull pf = sim.getPathFull();
-			    //System.out.println("Action " + pf.getPreviousAction() + " to state " + sim.getCurrentState() + " with prob " + pf.getPreviousProbability()/total_rate);
-			    
-			    // Accumulate path probability:
-			    double p_transition = (double)nativeRates.get(offset)/total_rate; 
-			    path_probability *= p_transition;
-			    double p_modified = (double)transitionRates.get(offset)/modified_total_rate;
-			    modified_probability *= p_modified;
-			    
-			    System.out.println("  transition probability: " + p_transition + ", modified: " + p_modified);
-			
-
-			    sim.manualTransition(offset);
-			    System.out.println("Next state " + sim.getCurrentState());
-			}
-			
+			modified_total_rate += (double) transitionRates.get(idx);
 		    }
-		    else
-			break;
+		    //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-		    /* ABSTRACT generalization:
-		       1. initialize the path, then step time
-		       2. loop over all transitions from current state, detect catalog inclusion 
-		       -> check conditions to add state into the catalog
-		       3. apply rate enhancements (THIS NEEDS A CUSTOM TRANSITION)
-		       4. (?) check conditions to include in catalog (?)
-		       5. check stopping conditions
-		    */
-		    
+		
+		    ////////////////////////////////////////////////////
+		    // Execute the transition:
+		    ////////////////////////////////////////////////////
+		    double x = rng.randomUnifDouble(modified_total_rate);
+
+		    double tot    = 0.0;
+		    int    offset = 0;
+		    for (offset = 0; x >= tot && offset < numTransitions; offset++) {
+			tot += (double) transitionRates.get(offset);
+		    }
+		    offset--;
+			
+		    // Get the new state:
+		    //		    Integer transitionTarget = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+			 			    
+		    // Accumulate path probability:
+		    double p_transition   = (double)nativeRates.get(offset)/total_rate; 
+		    path_probability     *= p_transition;
+		    double p_modified     = (double)transitionRates.get(offset)/modified_total_rate;
+		    modified_probability *= p_modified;
+			    
+		    sim.manualTransition(offset);
+		    Integer transitionTarget = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+		    if (transitionTarget == 0)
+			return 0;
 		}
+	    
+		else
+		    return path_probability/modified_probability;
 		
-		System.out.println("Total path:");
-		System.out.println(sim.getPath());
+		/* ABSTRACT generalization:
+		   1. initialize the path, then step time
+		   2. loop over all transitions from current state, detect catalog inclusion 
+		   -> check conditions to add state into the catalog
+		   3. apply rate enhancements (THIS NEEDS A CUSTOM TRANSITION)
+		   4. (?) check conditions to include in catalog (?)
+		   5. check stopping conditions
+		*/
 		
-		
-		System.out.printf("Path probability: %e\n", path_probability);
-		System.out.printf("Modified path probability: %e\n", modified_probability);
-		
-
-		// Close down PRISM
-		prism.closeDown();
-
-	    } 
-	    catch (PrismException e) {
-		System.out.println("Error: " + e.getMessage());
-		System.exit(1);
 	    }
-	
+	    return 0;
+		
+
+	} 
+	catch (PrismException e) {
+	    System.out.println("Error: " + e.getMessage());
+	    System.exit(1);
 	}
+	return 0;
+    }
 }
