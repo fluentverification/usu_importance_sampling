@@ -5,9 +5,7 @@ public class PrismModelGenerator {
     public static void main(String[] args) {
 
 
-        Scanner input = new Scanner(System.in);
-        System.out.print("Enter the number of States: ");
-        int numberOfStates = input.nextInt();
+        int numberOfStates = Integer.parseInt(args[1]);
         double maxRate = 10;
 
         System.out.println("ctmc");
