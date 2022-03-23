@@ -47,7 +47,7 @@ public class Histogram<T> {
 				return pair.first;
 			}
 		}
-
+		return pairs.get(pairs.size() - 1).first;
 	}
 
 	/**
