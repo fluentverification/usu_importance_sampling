@@ -28,7 +28,7 @@ public class Histogram<T> {
 	 * @param itemProbabilityPairs Items and probabilities they are chosen
 	 * */
 	public Histogram(ArrayList<Pair<T, float>> itemProbabilityPairs) {
-		this->itemProbabilityPairs = itemProbabilityPairs;
+		this.itemProbabilityPairs = itemProbabilityPairs;
 		checkItemProbabilityPairs();
 	}
 	
