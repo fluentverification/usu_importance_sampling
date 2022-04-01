@@ -1,6 +1,6 @@
 /*
 
-Histogram Class
+SpecifiedDegreeDistribution Class
 
 Author: Josh Jeppson
 
@@ -21,13 +21,13 @@ class Pair<T, U> {
 	public U second;
 }
 
-public class Histogram<T> {
+public class SpecifiedDegreeDistribution<T> {
 	/**
 	 * Constructor
 	 *
 	 * @param itemProbabilityPairs Items and probabilities they are chosen
 	 * */
-	public Histogram(ArrayList<Pair<T, float>> itemProbabilityPairs) {
+	public SpecifiedDegreeDistribution(ArrayList<Pair<T, float>> itemProbabilityPairs) {
 		this.itemProbabilityPairs = itemProbabilityPairs;
 		checkItemProbabilityPairs();
 	}
