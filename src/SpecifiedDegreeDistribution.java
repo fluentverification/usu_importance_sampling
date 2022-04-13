@@ -31,7 +31,7 @@ public class SpecifiedDegreeDistribution<T> {
 	 *
 	 * @param itemProbabilityPairs Items and probabilities they are chosen
 	 * */
-	public SpecifiedDegreeDistribution(ArrayList<Pair<T, float>> itemProbabilityPairs) {
+	public SpecifiedDegreeDistribution(ArrayList<Pair<T, Float>> itemProbabilityPairs) {
 		this.itemProbabilityPairs = itemProbabilityPairs;
 		checkItemProbabilityPairs();
 	}
@@ -43,9 +43,9 @@ public class SpecifiedDegreeDistribution<T> {
 	 * */
 	public T get() {
 		double r = Math.random();
-		ArrayList<Pair<T, float>> pairs = this.itemProbabilityPairs;
+		ArrayList<Pair<T, Float>> pairs = this.itemProbabilityPairs;
 		float total = 0;
-		for (Pair<T, float> pair : pairs) {
+		for (Pair<T, Float> pair : pairs) {
 			total += pair.second;
 			if (total >= r) {
 				return pair.first;
@@ -60,9 +60,9 @@ public class SpecifiedDegreeDistribution<T> {
 	 * Throws an exception if total probability is greater than 1.0
 	 */
 	private void checkItemProbabilityPairs() throws Exception {
-		ArrayList<Pair<T, float>> pairs = this.itemProbabilityPairs;
+		ArrayList<Pair<T, Float>> pairs = this.itemProbabilityPairs;
 		float total = 0;
-		for (Pair<T, float> pair : pairs) {
+		for (Pair<T, Float> pair : pairs) {
 			total += pair.second;
 			if (total > 1) {
 				throw new Exception("Total probability should not be greater than 1!");
@@ -70,5 +70,5 @@ public class SpecifiedDegreeDistribution<T> {
 		}
 	}
 	
-	ArrayList<Pair<T, float>> itemProbabilityPairs;
+	ArrayList<Pair<T, Float>> itemProbabilityPairs;
 }

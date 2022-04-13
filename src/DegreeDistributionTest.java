@@ -7,7 +7,7 @@ class DegreeDistributionTest {
 		// 	4 with probability 0.2
 		// 	5 with probability 0.3
 		// 	6 with probability 0.1
-		ArrayList<Pair<int, float>> itemProbabilityPairs = new ArrayList(
+		ArrayList<Pair<int, Float>> itemProbabilityPairs = new ArrayList(
 			{
 				Pair(1, 0.1)
 				, Pair(2, 0.1)
