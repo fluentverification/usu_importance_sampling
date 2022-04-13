@@ -19,6 +19,10 @@ import java.lang.Math;
 class Pair<T, U> {
 	public T first;
 	public U second;
+	public Pair(T f, U s) {
+		first = f;
+		second = s;
+	}
 }
 
 public class SpecifiedDegreeDistribution<T> {
