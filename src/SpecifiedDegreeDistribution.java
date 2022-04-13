@@ -70,5 +70,5 @@ public class SpecifiedDegreeDistribution<T> {
 		}
 	}
 	
-	ArrayList<Pair<T, Float>> itemProbabilityPairs;
+	private ArrayList<Pair<T, Float>> itemProbabilityPairs;
 }
