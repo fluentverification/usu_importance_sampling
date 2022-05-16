@@ -10,12 +10,23 @@ PRISM_CLASSPATH = "$(PRISM_DIR)/classes:classes"
 
 # This Makefile just builds all java files in src and puts the class files in classes
 
-JAVA_FILES := $(shell cd src && find . -name '*.java')
-CLASS_FILES = $(JAVA_FILES:%.java=classes/%.class)
+IS_JAVA_FILES := scaffoldImportanceSampling.java
+IS_CLASS_FILES = $(IS_JAVA_FILES:%.java=classes/%.class)
 
-default: all
+SHELL=/usr/bin/bash
 
-all: $(CLASS_FILES) test
+
+default: usage
+
+LINE1="ARGS=\"-M 2.0 -TMAX 1000 -Nruns 10000                            \\"
+LINE2="           -catalogFileName models/abstract/10_states/10_states.is   \\"
+LINE3="           -modelFileName models/abstract/10_states/10_states.pm\"  run"
+usage: 
+	@printf "==========================================\nScaffolding Importance Sampling Simulator\n==========================================\n\n"
+	@printf "Dependencies:\n   * cli-args library\n   * prism-api library\n\nTo install dependencies, run\n   make init\n\n"
+	@printf "Usage (All parameters optional, default values are shown):\n\nmake %s\n%s\n%s\n\n" $(LINE1) $(LINE2) $(LINE3)
+
+all: $(IS_CLASS_FILES) test
 
 .PHONY: init api cli-args test run
 
@@ -41,11 +52,14 @@ cli-args: init
 
 # Test execution
 
-test:
+test: $(IS_CLASS_FILES)
 	@export PRISM_DIR=$(PRISM_DIR); export PRISM_MAINCLASS=scaffoldImportanceSampling; bash -x prism-api/bin/run
 
-run:
+run: $(IS_CLASS_FILES)
 	@export PRISM_DIR=$(PRISM_DIR); export PRISM_MAINCLASS=scaffoldImportanceSampling; bash prism-api/bin/run $(ARGS)
+
+experiment: $(IS_CLASS_FILES)
+	@for M in $$(seq 1.0 0.1 2.0); do make --no-print-directory ARGS="-M $$M -raw true" run; done
 
 # Clean up
 

@@ -37,7 +37,7 @@ import prism.PrismLog;
 import prism.PrismPrintStreamLog;
 import simulator.SimulatorEngine;
 
-
+import com.jenkov.cliargs.CliArgs;
 
 /**
  * An example class demonstrating how to control PRISM programmatically,
@@ -55,6 +55,7 @@ public class scaffoldImportanceSampling
 	public  double             M       = 2; // transition multiplier
 	public  int                TMAX    = 1000; // maximum transitions before truncating
 	public  int                Nruns   = 100000; // Number of stochastic runs
+	public  Boolean            raw     = false; 
 	public static String catalogFileName; 
 	public static String modelFileName;
 
@@ -65,6 +66,9 @@ public class scaffoldImportanceSampling
 
 	public void printSwitches() {
 	    System.out.printf(" M=%f TMAX=%d Nruns=%d modelFile=%s ", M, TMAX, Nruns, modelFileName);
+	}
+	public void printRawSwitches() {
+	    System.out.printf("%f\t%d\t%d", M, TMAX, Nruns);
 	}
     }
 
@@ -93,7 +97,7 @@ public class scaffoldImportanceSampling
 	/*
 	for (int i=0; i<args.length; i++)
 	    System.out.println(args[i]);
-
+	
 	if (args.length > 0) 
 	    modelFileName = args[0];
 	else
@@ -105,7 +109,7 @@ public class scaffoldImportanceSampling
 
 	if (args.length > 2) 
 	    TMAX = Integer.parseInt(args[2]);
-	*/
+	    */
 
 	loadModel();
 	loadCatalog();
@@ -133,8 +137,14 @@ public class scaffoldImportanceSampling
 	    squareSum += squareTerm*squareTerm; 
 	}
 	double variance = squareSum/((double)params.Nruns*((double)params.Nruns-1));
-	System.out.print(" Probability to reach final state: " + mean + ", Variance " + variance);
-	params.printSwitches();
+	if (params.raw) {
+	    System.out.print(mean + "\t" + variance + "\t");
+	    params.printRawSwitches();
+	}
+	else {
+	    System.out.print(" Probability to reach final state: " + mean + ", Variance " + variance);
+	    params.printSwitches();
+	}
 	System.out.println("");
     }
 
