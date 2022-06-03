@@ -23,7 +23,7 @@ LINE2="           -catalogFileName models/abstract/10_states/10_states.is   \\"
 LINE3="           -modelFileName models/abstract/10_states/10_states.pm\"  run"
 usage: 
 	@printf "==========================================\nScaffolding Importance Sampling Simulator\n==========================================\n\n"
-	@printf "Dependencies:\n   * cli-args library\n   * prism-api library\n\nTo install dependencies, run\n   make init\n\n"
+	@printf "Dependencies:\n   * cli-args library\n   * prism-api library\n\nTo install dependencies, run\n   make init cli-args\n\n"
 	@printf "Usage (All parameters optional, default values are shown):\n\nmake %s\n%s\n%s\n\n" $(LINE1) $(LINE2) $(LINE3)
 
 all: $(IS_CLASS_FILES) test
