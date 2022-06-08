@@ -8,7 +8,7 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-public class Generator {
+public class SparseModelGenerator {
     class Node{ // Node clas is used to track each connection//
         int start;
         int end;
@@ -22,7 +22,7 @@ public class Generator {
     int graphSize;
     ArrayList<Node>[] graph; //Array list to track all transitions to and from states in the graph//
 
-    Generator(int size){ //Makes a object for a new graph//
+    SparseModelGenerator(int size){ //Makes a object for a new graph//
         graphSize = size;
         graph = new ArrayList[graphSize];
     }
@@ -171,7 +171,7 @@ probabilities.
         Scanner input1 = new Scanner(System.in);
         System.out.print("Enter the number of States: ");
         int numberOfStates = input1.nextInt();
-        Generator newModel = new Generator(numberOfStates);
+        SparseModelGenerator newModel = new SparseModelGenerator(numberOfStates);
 
         Scanner input2 = new Scanner(System.in);
         System.out.print("Enter the max transition rate: ");
