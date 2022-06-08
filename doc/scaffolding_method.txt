@@ -1,0 +1,11 @@
+Purpose: The purpose of the scaffolding method is to decrease the variance the result for a stochastic simulation,
+while also generating a definitive lower bound. Also, the method is designed to work with minimal outside input, which
+should allow for testing to be performed without major oversight.
+
+How: The scaffolding method works by building off of a predetermined path. 
+To do this all states that are known to connect to a path that connects to the target space are placed into a dictionary. 
+Using importance sampling the connections rates to states in the dictionary are increased, and then a stochastic simulation 
+is performed with new connecting states being added to the dictionary as they are found. 
+In theory, this method creates a concise lower bound by branching out into connecting states from an inputted seed path. 
+After the scaffolding has finished the result of the simulation should be obtainable by reserving the importance sampling
+weights and then calculating the result with the systems correct rates.
