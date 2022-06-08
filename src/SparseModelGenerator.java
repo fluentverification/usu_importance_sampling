@@ -187,7 +187,7 @@ probabilities.
             Scanner input4 = new Scanner(System.in);
             System.out.print("\nEnter the Target State: ");
             int target = input4.nextInt();
-	    if(target >= numberOfStates){
+	    if(target >= numberOfStates || target < 0){
 	    System.out.print("\nOut of Bounds");
 	    }
 	    else{
