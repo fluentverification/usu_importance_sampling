@@ -187,7 +187,12 @@ probabilities.
             Scanner input4 = new Scanner(System.in);
             System.out.print("\nEnter the Target State: ");
             int target = input4.nextInt();
+	    if(target >= numberOfStates){
+	    System.out.print("\nOut of Bounds");
+	    }
+	    else{
             newModel.seedPath(target);
+	    }
         }
     }
 }
