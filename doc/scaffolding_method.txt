@@ -9,3 +9,7 @@ is performed with new connecting states being added to the dictionary as they ar
 In theory, this method creates a concise lower bound by branching out into connecting states from an inputted seed path. 
 After the scaffolding has finished the result of the simulation should be obtainable by reserving the importance sampling
 weights and then calculating the result with the systems correct rates.
+
+Current Testing/Results: The current coding for the method was developed by Dr. Winstead and has been run on proceedurly
+generated models designed by Assisstant Researcher Tom Prouty. Current results seem to show that variance is far less than...
+
