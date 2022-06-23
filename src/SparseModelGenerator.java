@@ -92,9 +92,8 @@ public class SparseModelGenerator {
     public void seedPath(int target, String fileName2) throws IOException {
         FileWriter writer = new FileWriter(fileName2);
         int tracker = 0;
-        writer.write("Path from origin to target:");
         while(tracker != target){
-            writer.write(tracker + " -> ");
+            writer.write(tracker + ",");
             tracker = graph[tracker].get((int) (Math.random() * graph[tracker].size())).end;
         }
 
