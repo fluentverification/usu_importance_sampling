@@ -1,12 +1,11 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.lang.Exception;
 import java.lang.Math;
 import java.lang.Double;
 import java.util.Scanner;
 import java.io.File;
-import java.io.FileNotFoundException;
 
 public class SparseModelGenerator {
     class Node{ // Node clas is used to track each connection//
@@ -72,31 +71,35 @@ public class SparseModelGenerator {
             temp = successor;
         }
     }
-    public void printGraph(){
-        System.out.println("ctmc\n");
+    public void printGraph(String fileName1) throws IOException {
+        FileWriter writer = new FileWriter(fileName1);
+        writer.write("ctmc\n");
         for(int count = 0; count < graphSize; count++){
-            System.out.print("[] x="+ count + " -> ");
+            writer.write("[] x="+ count + " -> ");
             for(int count2 = 0; count2 < graph[count].size(); count2++) {
-                System.out.print((int) graph[count].get(count2).rate +":(x'=" + graph[count].get(count2).end + ")");
+                writer.write((int) graph[count].get(count2).rate +":(x'=" + graph[count].get(count2).end + ")");
                 if(count2 + 1 < graph[count].size()){
-                    System.out.print(" + ");
+                    writer.write(" + ");
                 }
                 else{
-                    System.out.println(";");
+                    writer.write(";\n");
                 }
             }
         }
+        writer.close();
     }
 
-    public void seedPath(int target){
+    public void seedPath(int target, String fileName2) throws IOException {
+        FileWriter writer = new FileWriter(fileName2);
         int tracker = 0;
-        System.out.println("Path from origin to target:");
+        writer.write("Path from origin to target:");
         while(tracker != target){
-            System.out.print(tracker + " -> ");
+            writer.write(tracker + " -> ");
             tracker = graph[tracker].get((int) (Math.random() * graph[tracker].size())).end;
         }
 
-        System.out.println(target);
+        writer.write(target + "\n");
+        writer.close();
     }
 
     /*
@@ -180,19 +183,18 @@ probabilities.
         System.out.print("Enter the Diogram of Transition probabilities: ");
         String filename = input3.nextLine();
         newModel.makeGraph(transitionRate,filename);
-
-        newModel.printGraph();
+        newModel.printGraph("PrismFile.pm");
 
         while(true) {
             Scanner input4 = new Scanner(System.in);
             System.out.print("\nEnter the Target State: ");
             int target = input4.nextInt();
-	    if(target >= numberOfStates || target < 0){
-	    System.out.print("\nOut of Bounds");
-	    }
-	    else{
-            newModel.seedPath(target);
-	    }
+            if(target >= numberOfStates || target < 0){
+                System.out.print("\nOut of Bounds");
+            }
+            else{
+                newModel.seedPath(target,"SeedPath.is");
+            }
         }
     }
 }
