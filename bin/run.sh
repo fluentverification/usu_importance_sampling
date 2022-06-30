@@ -1,29 +1,37 @@
 #!/bin/bash
 
-printf "Available classes:\n"
+if [ "$PRISM_DIR" = "" ]; then
+	PRISM_DIR="/usr/local/prism-src"
+fi
 
-#i=0
-#while read line
-#do
-#    CLASSES[ $i ] = "$line"
-#    (( i++ ))
-#done < <(ls -1 classes | sed 's/\(.*\)\..*/\1/')
+# Class to run
+if [ "$PRISM_MAINCLASS" = "" ]; then
+	PRISM_MAINCLASS=imsam.scaffoldImportanceSampling
+fi
 
-CLASSES=($(ls -1 classes | sed 's/\(.*\)\..*/\1/'))
-i=0
-for item in ${CLASSES[*]}
-do
-    printf "%d  %s\n" $i $item
-    (( i++ ))
-done
 
-read -p "Which class to run? (Enter number) " sel
+# Set up CLASSPATH:
+PRISM_CLASSPATH=build/libs/*:"$PRISM_DIR"/prism:"$PRISM_DIR"/prism/classes:"$PRISM_DIR"/prism/lib/*
 
-export LD_LIBRARY_PATH=/usr/local/prism-src/prism/prism/lib:/usr/local/prism-src/prism/prism/prism/lib
-export jlibs="-Djava.library.path=/usr/local/prism-src/prism/prism/lib:/usr/local/prism-src/prism/prism/prism/lib"
-export clibs='classes:/usr/local/prism-src/prism/prism:/usr/local/prism-src/prism/prism/classes:/usr/local/prism-src/prism/prism/lib/*:/usr/local/prism-src/prism/prism/prism:/usr/local/prism-src/prism/prism/prism/classes:/usr/local/prism-src/prism/prism/prism/lib/*'
+# Set up pointers to libraries
+# As above, we look in both the top-level and the prism sub-directory
+PRISM_LIB_PATH="$PRISM_DIR"/prism/lib
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	export DYLD_LIBRARY_PATH="$PRISM_LIB_PATH"
+else
+	export LD_LIBRARY_PATH="$PRISM_LIB_PATH"
+fi
 
-printf "Running %s\n" ${CLASSES[ $sel ] }
+# Command to launch Java
+if [ "$PRISM_JAVA" = "" ]; then
+	# On OS X, we want to avoiding calling java from the /usr/bin link
+	# since it causes problems with dynamic linking (DYLD_LIBRARY_PATH)
+	if [ -x /usr/libexec/java_home ]; then
+		PRISM_JAVA=`/usr/libexec/java_home`"/bin/java"
+	else
+		PRISM_JAVA=java
+	fi
+fi
 
-java $jlibs -cp $clibs ${CLASSES[ $sel ] }
-
+# Run PRISM through Java
+"$PRISM_JAVA" -Djava.library.path="$PRISM_LIB_PATH" -classpath "$PRISM_CLASSPATH" "$PRISM_MAINCLASS" "$@"

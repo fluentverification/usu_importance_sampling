@@ -9,6 +9,8 @@ and will randomly choose based on the uniformly distributed Math.random() accord
 probabilities.
 
 */
+package imsam;
+
 import java.util.ArrayList;
 import java.lang.Exception;
 import java.lang.Math;
@@ -31,7 +33,7 @@ public class SpecifiedDegreeDistribution<T> {
 	 *
 	 * @param itemProbabilityPairs Items and probabilities they are chosen
 	 * */
-	public SpecifiedDegreeDistribution(ArrayList<Pair<T, Float>> itemProbabilityPairs) {
+	public SpecifiedDegreeDistribution(ArrayList<Pair<T, Float>> itemProbabilityPairs) throws Exception {
 		this.itemProbabilityPairs = itemProbabilityPairs;
 		checkItemProbabilityPairs();
 	}

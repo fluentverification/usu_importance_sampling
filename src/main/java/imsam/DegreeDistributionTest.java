@@ -1,3 +1,6 @@
+/*
+package imsam;
+
 class DegreeDistributionTest {
 	public static void main(String[] args) {
 		// We want to choose:
@@ -23,3 +26,4 @@ class DegreeDistributionTest {
 		int secondChoice = dist.get();
 	}
 }
+*/

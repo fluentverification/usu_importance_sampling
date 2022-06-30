@@ -16,6 +16,8 @@
 //
 // Based on PRISM API demo "SimulateModel". 
 
+package imsam;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.BufferedReader;
