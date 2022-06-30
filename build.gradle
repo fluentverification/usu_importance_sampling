@@ -66,4 +66,5 @@ jar {
         // This bundles all the dependencies from libBundle into the jar
         configurations.libBundle.collect { it.isDirectory() ? it : zipTree(it) }
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE     // fixes duplicate error from Gradle 7
 }
