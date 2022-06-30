@@ -5,3 +5,5 @@ prism-api
 classes/
 cli-args/
 .vscode/
+.gradle/
+build/

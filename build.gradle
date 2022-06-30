@@ -1,0 +1,69 @@
+plugins {
+    id 'org.ajoberstar.grgit' version '4.1.1' apply false
+}
+apply plugin: 'java'
+apply plugin: 'application'
+
+
+mainClassName = "imsam.scaffoldImportanceSampling"
+
+sourceCompatibility = 13
+targetCompatibility = 13
+
+
+// This tasks uses grgit to clone the cli-args lib
+// and runs before the compileJava task
+import org.ajoberstar.grgit.Grgit
+task cliargs {
+    doFirst {
+        def repoDir = "$buildDir/cli-args"
+        def grgit = Grgit.init(dir: repoDir)
+        if (grgit.remote.list().isEmpty()) {
+            grgit.remote.add(name: "origin", url: "https://github.com/jjenkov/cli-args.git")
+        }
+        grgit.pull(rebase: true)
+    }
+}
+compileJava.dependsOn cliargs
+
+// We have multiple sources dirs because of the
+// source lib(s) used
+sourceSets {
+    main {
+        java {
+            srcDirs "src/main/java"
+            srcDirs "build/cli-args/src/main/java"
+        }
+    }
+}
+
+// Custom configuration used to bundle libs into jar file
+configurations {
+    libBundle
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Prism files not to be copied to distributions
+    compileOnly files("/usr/local/prism-src/prism/classes")
+
+    // Declare any new dependencies here using the
+    // libBundle configuration
+    libBundle "org.json:json:20220320"
+    configurations.implementation.extendsFrom(configurations.libBundle)
+
+    //testImplementation "junit:junit:4.12"
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "imsam.scaffoldImportanceSampling"
+    }
+    from {
+        // This bundles all the dependencies from libBundle into the jar
+        configurations.libBundle.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
