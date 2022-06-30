@@ -7,21 +7,20 @@ importance splitting, and related techniques.
 
 # Dependencies and Build Instructions
 
-## Cygwin
+Dependencies:
 
-* Java Open-JDK 13 -- Download from [http://jdk.java.net/java-se-ri/13]
-* Development package group, specifically: 
-     - gcc (tested with gcc-11.2.0)
-     - git (tested with 2.33.0)
-     - gnu make (tested with 2.33.0)
-* PRISM v4.6 source distribution -- downloaded automatically by the Makefile
-* PRISM-API v4.6 -- dowloaded automatically by the Makefile
+- Install the following packages:
+    - openjdk-13-jdk
+    - gcc
+    - g++
+    - git
+    - make
+- Clone this repository and run `./bin/initPrism.sh` to install Prism from source
 
 Build instructions:
 
-1. Install jdk-13, gcc, git, and make.
-2. Set JAVA_DIR environment variable to location of jdk-13 
-3. Clone this repository and run `make`
+1. Run `./gradlew build`
+2. Simulations can now by run using `./bin/run.sh` from the repository root directory
 
 
 
