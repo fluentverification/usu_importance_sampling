@@ -18,7 +18,7 @@ import org.json.JSONObject;
  * 
  * @author Andrew Gerber
  */
-public class Histogram implements ProbabilityDistribution {
+public class Histogram implements ProbabilityDensityFunction {
     
 
     ///////////////////////////////////////////////////////////
