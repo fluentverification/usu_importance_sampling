@@ -1,4 +1,4 @@
-package imsam;
+package imsam.probability;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,15 +18,15 @@ import org.json.JSONObject;
  * 
  * @author Andrew Gerber
  */
-public class Histogram implements ProbabilityDensityFunction {
+public class DiscreteProbabilityDistribution implements ProbabilityDistribution {
     
 
     ///////////////////////////////////////////////////////////
     // Static Methods
 
     /**
-     * Reads a histogram from a tab, space, or comma delimited data
-     * sources. Elements are separated by new lines.
+     * Reads a discrete distribution (histogram) from a tab, space, or comma
+     * delimited data sources. Elements are separated by new lines.
      * 
      * ex: 6-sided dice
      *  1 0.1667
@@ -36,38 +36,38 @@ public class Histogram implements ProbabilityDensityFunction {
      *  5 0.1667
      *  6 0.1667
      * 
-     * @param str input histogram data
-     * @return constructed Histogram object
+     * @param str input discrete distribution (histogram) data
+     * @return constructed DiscreteDistribution object
      */
-    public static Histogram fromStringBasic(String str) throws IllegalArgumentException {
+    public static DiscreteProbabilityDistribution fromStringBasic(String str) throws IllegalArgumentException {
         return null;
     }
 
     /**
-     * Reads a histogram from a JSON data string.
+     * Reads a discrete distribution (histogram) from a JSON data string.
      * 
      * ex: 6-sided dice
      *  {"1":"0.1667", "2":"0.1667", "3":"0.1667", "4":"0.1667", "5":"0.1667", "6":"0.1667"}
      * 
-     * @param json input histogram data as JSON string
-     * @return constructed Histogram object
+     * @param json input discrete distribution (histogram) data as JSON string
+     * @return constructed DiscreteDistribution object
      */
-    public static Histogram fromStringJSON(String json) throws IllegalArgumentException, JSONException {
+    public static DiscreteProbabilityDistribution fromStringJSON(String json) throws IllegalArgumentException, JSONException {
         return fromJSON(new JSONObject(json));
     }
 
     /**
-     * Reads a histogram from a JSONObject.
+     * Reads a discrete distribution (histogram) from a JSONObject.
      * 
-     * @param json input histogram data as JSONObject
+     * @param json input discrete distribution (histogram) data as JSONObject
      */
-    public static Histogram fromJSON(JSONObject json) throws IllegalArgumentException {
-        Histogram hist = new Histogram(json.length());
+    public static DiscreteProbabilityDistribution fromJSON(JSONObject json) throws IllegalArgumentException {
+        DiscreteProbabilityDistribution hist = new DiscreteProbabilityDistribution(json.length());
         try {
             Iterator<String> keys = json.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                hist.elements.add(new Element(
+                hist.probabilityMappings.add(new ProbabilityMapping(
                             Double.parseDouble(key),
                             Double.parseDouble((String) json.get(key))
                 ));
@@ -80,21 +80,22 @@ public class Histogram implements ProbabilityDensityFunction {
     }
 
     /**
-     * Reads a histogram from tab, space, or comma delimited data
-     * from a file source. Elements are separated by new lines.
+     * Reads a discrete distribution (histogram) from tab, space, or
+     * comma delimited data from a file source. Elements are separated
+     * by new lines.
      * @param filename file path to data source
-     * @return constructed Histogram object
+     * @return constructed DiscreteDistribution object
      */
-    public static Histogram fromFileBasic(String filename) throws IllegalArgumentException, IOException {
+    public static DiscreteProbabilityDistribution fromFileBasic(String filename) throws IllegalArgumentException, IOException {
         return null;
     }
 
     /**
-     * Reads a histogram from a json file source.
+     * Reads a discrete distribution (histogram) from a json file source.
      * @param filename file path to json data source
-     * @return constructed Histogram object
+     * @return constructed DiscreteDistribution object
      */
-    public static Histogram fromFileJSON(String filename) throws IllegalArgumentException, JSONException, IOException {
+    public static DiscreteProbabilityDistribution fromFileJSON(String filename) throws IllegalArgumentException, JSONException, IOException {
         return null;
     }
 
@@ -110,16 +111,14 @@ public class Histogram implements ProbabilityDensityFunction {
     /**
      * Main data
      */
-    private final List<Element> elements;
+    private final List<ProbabilityMapping> probabilityMappings;
 
     /**
      * Constructors are private. Use static from* methods to create
      * new class objects.
      * @param size initial size of ArrayList
      */
-    private Histogram(int size) {
-        elements = new ArrayList<Element>(size);
-    }
+    private DiscreteProbabilityDistribution
 
     /**
      * Returns the probability of the given value

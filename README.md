@@ -13,7 +13,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 ### Dependencies:
 
-- Install the following packages (package names for Ubuntu):
+- Install the following packages (package names for Debian/Ubuntu Based):
     - openjdk-17-jdk *(or 13; 17 preferred)*
     - gcc
     - g++
@@ -32,7 +32,8 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 - Run `./gradlew -v`. Gradle should be 7, JVM should be 13-17
 - Java version not available?
-    - Ubuntu: run `apt update`
+    - Debian/Ubuntu Based: run `apt update`
+    - Arch-based: `pacman -Syuu`
 - Error `Cannot find symbol ... Prism* ...` or `package parser/prism does not exist`
     - Prism is not installed/compiled correctly
     - Run `./bin/initPrism.sh`

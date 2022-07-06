@@ -1,9 +1,9 @@
-package imsam;
+package imsam.probability;
 
 /**
  * A standard interface for probability density functions (PDF)
  */
-public interface ProbabilityDensityFunction {
+public interface ProbabilityDistribution {
 
     /**
      * Returns the probability of the given value
