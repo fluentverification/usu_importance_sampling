@@ -49,17 +49,14 @@ public class SparseModelGenerator {
         ArrayList<Pair<Integer, Double>> itemProbabilityPairs = new ArrayList<Pair<Integer,Double>>();
         makeProb(file, itemProbabilityPairs);
         SpecifiedDegreeDistribution<Integer> dist = new SpecifiedDegreeDistribution<Integer>(itemProbabilityPairs);
-	//Added
-	//Random r = new Random();
+        ProbabilityDistribution rand = new UniformIntDistribution(1, rate);
         for(int count = 0; count < graphSize; count++){
             graph[count] = new ArrayList<Node>();
             int firstChoice = dist.get();
             for(int count2 = 0; count2 < firstChoice; count2++) {
                 int successor = (int) (Math.random() * graphSize);
                 if(count != successor){
-		    //Added
-		    //graph[count].add(new Node(count, successor, (r.nextInt(rate-1)+1));
-                    graph[count].add(new Node(count, successor, (rate * Math.random())));
+                    graph[count].add(new Node(count, successor, rand.random()));
                 }
             }
         }
@@ -72,9 +69,7 @@ public class SparseModelGenerator {
                 successor = (int) (Math.random() * graphSize);
             }
             if(temp != successor) {
-		//Added
-		 //graph[count].add(new Node(count, successor, (r.nextInt(rate-1)+1));
-                graph[temp].add(new Node(temp, successor, (rate * Math.random())));
+                graph[temp].add(new Node(temp, successor, rand.random()));
             }
             seedTracker[successor] = true;
             temp = successor;
