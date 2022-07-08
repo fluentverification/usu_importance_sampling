@@ -55,9 +55,9 @@ public class PrismModelGenerator {
                             double probRandom = (maxRate * Math.random());
                             System.out.printf("    const double R" + count + "_" + i + " = " + "%.3f" + ";\n", probRandom);
                         }
-                        else{
-                            //System.out.printf("    const double R" + count + "_" + i + " = " + "%.3f" + ";\n", 0.000);
-                        }
+                        /*else{
+                            System.out.printf("    const double R" + count + "_" + i + " = " + "%.3f" + ";\n", 0.000);
+                        }*/
                     }
                 }
             }
