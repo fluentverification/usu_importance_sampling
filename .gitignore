@@ -3,8 +3,10 @@
 prism_api
 prism-api
 classes/
+*.class
 cli-args/
 .vscode/
 .gradle/
 build/
 bin/main/
+

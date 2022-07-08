@@ -1,13 +1,20 @@
 package imsam.probability;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Scanner;
+import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple implementation for representing histograms. Variables are stored
@@ -20,6 +27,8 @@ import org.json.JSONObject;
  */
 public class DiscreteProbabilityDistribution implements ProbabilityDistribution {
     
+    final static Logger logger = LogManager.getLogger(DiscreteProbabilityDistribution.class);
+
 
     ///////////////////////////////////////////////////////////
     // Static Methods
@@ -40,7 +49,37 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @return constructed DiscreteDistribution object
      */
     public static DiscreteProbabilityDistribution fromStringBasic(String str) throws IllegalArgumentException {
-        return null;
+        String[] lines = str.lines().toArray(String[]::new);
+        DiscreteProbabilityDistribution distribution
+                = new DiscreteProbabilityDistribution(lines.length);
+        Scanner scanner = null;
+        int lineNum = 1;
+        try {
+            for (String line : lines) {
+                if (!line.strip().isEmpty()) {
+                    scanner = new Scanner(line);
+                    scanner.useDelimiter("[\\s,]+");            // whitespace or commas
+                    double value = scanner.nextDouble();
+                    double probability = scanner.nextDouble();
+                    distribution.probabilities.add(new ProbabilityMapping(value, probability));
+                    lineNum++;
+                }
+            }
+        } catch (InputMismatchException | NumberFormatException ex) {
+            String msg = "Format error on line "+lineNum+" of histogram input string - "+ex.getMessage();
+            logger.error(msg, ex);
+            throw new IllegalArgumentException(msg, ex);
+        } catch (NoSuchElementException | IllegalStateException ex) {
+            String msg = "Unexpected EOF while scanning histogram input string - "+ex.getMessage();
+            logger.error(msg, ex);
+            throw new IllegalArgumentException(msg, ex);
+        } finally {
+            if (null != scanner) {
+                scanner.close();
+            }
+        }
+        distribution.normalize();
+        return distribution;
     }
 
     /**
@@ -62,21 +101,23 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @param json input discrete distribution (histogram) data as JSONObject
      */
     public static DiscreteProbabilityDistribution fromJSON(JSONObject json) throws IllegalArgumentException {
-        DiscreteProbabilityDistribution hist = new DiscreteProbabilityDistribution(json.length());
+        DiscreteProbabilityDistribution distribution;
+        distribution = new DiscreteProbabilityDistribution(json.length());
         try {
             Iterator<String> keys = json.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                hist.probabilityMappings.add(new ProbabilityMapping(
+                distribution.probabilities.add(new ProbabilityMapping(
                             Double.parseDouble(key),
-                            Double.parseDouble((String) json.get(key))
+                            Double.parseDouble(json.get(key).toString())
                 ));
             }
-            return hist;
         }
         catch (Exception ex) {
             throw new IllegalArgumentException(ex);
         }
+        distribution.normalize();
+        return distribution;
     }
 
     /**
@@ -87,7 +128,8 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @return constructed DiscreteDistribution object
      */
     public static DiscreteProbabilityDistribution fromFileBasic(String filename) throws IllegalArgumentException, IOException {
-        return null;
+        Path filepath = Path.of(filename);
+        return fromStringBasic(Files.readString(filepath));
     }
 
     /**
@@ -96,7 +138,8 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @return constructed DiscreteDistribution object
      */
     public static DiscreteProbabilityDistribution fromFileJSON(String filename) throws IllegalArgumentException, JSONException, IOException {
-        return null;
+        Path filepath = Path.of(filename);
+        return fromStringJSON(Files.readString(filepath));
     }
 
     // 
@@ -111,36 +154,37 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
     /**
      * Main data
      */
-    private final List<ProbabilityMapping> probabilityMappings;
+    private final List<ProbabilityMapping> probabilities;
 
     /**
-     * Constructors are private. Use static from* methods to create
+     * Constructors are private. Use static methods to create
      * new class objects.
      * @param size initial size of ArrayList
      */
-    private DiscreteProbabilityDistribution
+    private DiscreteProbabilityDistribution(int size) {
+        this.probabilities = new ArrayList<ProbabilityMapping>(size);
+    }
+
+    /**
+     * Constructors are private. Use static methods to create
+     * new class objects
+     * @param probabilities list of type ProbabilityMapping to back the object
+     */
+    private DiscreteProbabilityDistribution(List<ProbabilityMapping> probabilities) {
+        this.probabilities = probabilities;
+    }
 
     /**
      * Returns the probability of the given value
      * @param value value to get probability for
      * @return probability associated with the value
      */
-    @Override
     public double getProbability(double value) throws NoSuchElementException {
-        return 0;
-    }
-
-    /**
-     * Returns the probability  of the given value. The tolerance
-     * is used to compensate for rounding errors. In the case of
-     * multiple values within the tolerance, the lowest value is
-     * used.
-     * @param value value to get probability for
-     * @param tolerance tolerance +/- of value
-     * @return probability associated with the value
-     */
-    @Override
-    public double getProbability(double value, double tolerance) throws NoSuchElementException {
+        for (ProbabilityMapping probMapping : probabilities) {
+            if (probMapping.value == value) {
+                return probMapping.probability;
+            }
+        }
         return 0;
     }
 
@@ -178,7 +222,17 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @return histogram as string
      */
     public String toStringBasic(String delimiter) {
-        return "";
+        StringBuilder builder = new StringBuilder();
+        for (ProbabilityMapping probMapping : probabilities) {
+            builder.append(probMapping.value)
+                    .append(delimiter)
+                    .append(probMapping.probability)
+                    .append("\n");
+        }
+        if (!probabilities.isEmpty()) {
+            builder.deleteCharAt(builder.length()-1);
+        }
+        return builder.toString();
     }
 
     /**
@@ -190,7 +244,14 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * @return histogram as JSON
      */
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        for (ProbabilityMapping probMapping : probabilities) {
+            json.put(
+                String.valueOf(probMapping.value),
+                probMapping.probability
+            );
+        }
+        return json;
     }
 
 
@@ -201,7 +262,7 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     @Override
     public String toString() {
-        return "";
+        return toJSON().toString();
     }
 
     /**
@@ -218,7 +279,7 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * Creates the specified file with the histogram represented
      * using the given delimiter.  If the file already exists, it
      * will be overwritten automatically.
-     * @param filenamen name of file to write to
+     * @param filename name of file to write to
      * @param delimiter character to use as delimiter
      */
     public void toFileBasic(String filename, String delimiter) throws IOException {
@@ -234,11 +295,28 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
     }
 
     /**
+     * Return the number of elements contained in this histogram
+     * @return number of elements
+     */
+    public int size() {
+        return probabilities.size();
+    }
+
+    /**
      * Used in the creation of a Histogram object. Non-normalized
      * data can be provided as input to then be normalized before
      * construction of the new object is complete.
      */
     private void normalize() {
+        double totalProbability = 0;
+        for (ProbabilityMapping probMapping : probabilities) {
+            totalProbability += probMapping.probability;
+        }
+        if (totalProbability != 1) {
+            for (ProbabilityMapping probMapping : probabilities) {
+                probMapping.probability = probMapping.probability / totalProbability;
+            }
+        }
     }
 
     //
@@ -252,10 +330,10 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
     /**
      * Simple structure to store the value/probability pairs
      */
-    public static class Element {
+    public static class ProbabilityMapping {
         public double value;
         public double probability;
-        Element(double value, double probability) {
+        ProbabilityMapping(double value, double probability) {
             this.value = value;
             this.probability = probability;
         }
