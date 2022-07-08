@@ -11,7 +11,7 @@ importance splitting, and related techniques.
 
 Tested on Ubuntu 20 *WSL* and Centos 7
 
-### Dependencies:
+## Dependencies:
 
 - Install the following packages (package names for Debian/Ubuntu Based):
     - openjdk-17-jdk *(or 13; 17 preferred)*
@@ -21,14 +21,14 @@ Tested on Ubuntu 20 *WSL* and Centos 7
     - make
 - Clone this repository and run `./bin/initPrism.sh` to install Prism from source
 
-### Build instructions:
-
-1. Run `./gradlew build`
-2. Simulations can now by run using `./bin/run.sh` from the repository root directory
-
 <br>
 
-### Troubleshooting
+## Build instructions:
+
+1. Run `./gradlew build`
+
+
+#### Troubleshooting
 
 - Run `./gradlew -v`. Gradle should be 7, JVM should be 13-17
 - Java version not available?
@@ -37,4 +37,10 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 - Error `Cannot find symbol ... Prism* ...` or `package parser/prism does not exist`
     - Prism is not installed/compiled correctly
     - Run `./bin/initPrism.sh`
-    
+
+<br>
+
+ ## Run:
+
+- Simulations can be run using `./bin/run.sh` from the repository root directory
+- The Sparse Model Generator can be run using `PRISM_MAINCLASS=imsam.SparseModelGenerator ./bin/run.sh`.
