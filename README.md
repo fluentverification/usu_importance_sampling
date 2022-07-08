@@ -5,24 +5,42 @@ simulate Markov models. Path generation is managed to
 implement various experiments with importance sampling, 
 importance splitting, and related techniques.
 
+<br>
+
 # Dependencies and Build Instructions
 
-## Cygwin
+Tested on Ubuntu 20 *WSL* and Centos 7
 
-* Java Open-JDK 13 -- Download from [http://jdk.java.net/java-se-ri/13]
-* Development package group, specifically: 
-     - gcc (tested with gcc-11.2.0)
-     - git (tested with 2.33.0)
-     - gnu make (tested with 2.33.0)
-* PRISM v4.6 source distribution -- downloaded automatically by the Makefile
-* PRISM-API v4.6 -- dowloaded automatically by the Makefile
+## Dependencies:
 
-Build instructions:
+- Install the following packages (package names for Debian/Ubuntu Based):
+    - openjdk-17-jdk *(or 13; 17 preferred)*
+    - gcc
+    - g++
+    - git
+    - make
+- Clone this repository and run `./bin/initPrism.sh` to install Prism from source
 
-1. Install jdk-13, gcc, git, and make.
-2. Set JAVA_DIR environment variable to location of jdk-13 
-3. Clone this repository and run `make`
+<br>
+
+## Build instructions:
+
+1. Run `./gradlew build`
 
 
+#### Troubleshooting
 
+- Run `./gradlew -v`. Gradle should be 7, JVM should be 13-17
+- Java version not available?
+    - Debian/Ubuntu Based: run `apt update`
+    - Arch-based: `pacman -Syuu`
+- Error `Cannot find symbol ... Prism* ...` or `package parser/prism does not exist`
+    - Prism is not installed/compiled correctly
+    - Run `./bin/initPrism.sh`
 
+<br>
+
+ ## Run:
+
+- Simulations can be run using `./bin/run.sh` from the repository root directory
+- The Sparse Model Generator can be run using `PRISM_MAINCLASS=imsam.SparseModelGenerator ./bin/run.sh`.

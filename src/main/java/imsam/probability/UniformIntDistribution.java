@@ -1,7 +1,11 @@
+package imsam.probability;
+
 import java.util.Random;
 
+import imsam.probability.ProbabilityDistribution;
 
-public class UniformIntDistribution {
+
+public class UniformIntDistribution implements ProbabilityDistribution {
 
     private final int min;
     private final int max;
@@ -9,7 +13,7 @@ public class UniformIntDistribution {
 
     
     public UniformIntDistribution(int max) {
-        UniformIntDistribution(0, max);
+        this(0, max);
     }
 
     public UniformIntDistribution(int min, int max) {
@@ -19,7 +23,7 @@ public class UniformIntDistribution {
     }
 
     public UniformIntDistribution(int max, long seed) {
-        UniformIntDistribution(0, max, seed);
+        this(0, max, seed);
     }
 
     public UniformIntDistribution(int min, int max, long seed) {

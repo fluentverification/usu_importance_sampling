@@ -1,4 +1,4 @@
-//package imsam.probability;
+package imsam.probability;
 
 /**
  * A standard interface for probability density functions (PDF)
