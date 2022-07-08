@@ -12,6 +12,7 @@ probabilities.
 package imsam;
 
 import java.util.ArrayList;
+import java.lang.IllegalArgumentException;
 import java.lang.Exception;
 import java.lang.Math;
 
@@ -33,7 +34,7 @@ public class SpecifiedDegreeDistribution<T> {
 	 *
 	 * @param itemProbabilityPairs Items and probabilities they are chosen
 	 * */
-	public SpecifiedDegreeDistribution(ArrayList<Pair<T, Float>> itemProbabilityPairs) throws IllegalFormatException {
+	public SpecifiedDegreeDistribution(ArrayList<Pair<T, Float>> itemProbabilityPairs) throws IllegalArgumentException {
 		this.itemProbabilityPairs = itemProbabilityPairs;
 		checkItemProbabilityPairs();
 	}
@@ -61,13 +62,13 @@ public class SpecifiedDegreeDistribution<T> {
 	 * 
 	 * Throws an exception if total probability is greater than 1.0
 	 */
-	private void checkItemProbabilityPairs() throws IllegalFormatException {
+	private void checkItemProbabilityPairs() throws IllegalArgumentException {
 		ArrayList<Pair<T, Float>> pairs = this.itemProbabilityPairs;
 		float total = 0;
 		for (Pair<T, Float> pair : pairs) {
 			total += pair.second;
 			if (total > 1) {
-				throw new IllegalFormatException("Total probability should not be greater than 1!");
+				throw new IllegalArgumentException("Total probability should not be greater than 1!");
 			}
 		}
 	}

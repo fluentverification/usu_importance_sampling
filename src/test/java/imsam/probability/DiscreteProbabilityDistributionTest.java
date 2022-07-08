@@ -3,13 +3,8 @@ package imsam.probability;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 
 public class DiscreteProbabilityDistributionTest {
-
-    final static Logger logger = LogManager.getLogger(DiscreteProbabilityDistribution.class);
 
     @Test
     public void test_fromStringBasic() {

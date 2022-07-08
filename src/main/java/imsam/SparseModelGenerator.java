@@ -8,9 +8,11 @@ import java.lang.Math;
 import java.lang.Double;
 import java.util.Scanner;
 import java.io.File;
-
-//Added
 import java.util.Random;
+
+import imsam.probability.ProbabilityDistribution;
+import imsam.probability.UniformIntDistribution;
+
 
 public class SparseModelGenerator {
     class Node{ // Node clas is used to track each connection//

@@ -21,7 +21,6 @@ public class CoinTossDistribution implements ProbabilityDistribution {
     }
 
     
-    @Override
     public double getProbability(double value) {
         if (0 == value || 1 == value) {
             return 0.5;
