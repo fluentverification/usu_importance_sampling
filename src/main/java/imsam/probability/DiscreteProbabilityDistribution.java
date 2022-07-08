@@ -13,6 +13,8 @@ import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple implementation for representing histograms. Variables are stored
@@ -24,6 +26,8 @@ import org.json.JSONObject;
  * @author Andrew Gerber
  */
 public class DiscreteProbabilityDistribution implements ProbabilityDistribution {
+    
+    final static Logger logger = LogManager.getLogger(DiscreteProbabilityDistribution.class);
 
 
     ///////////////////////////////////////////////////////////
@@ -63,9 +67,11 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
             }
         } catch (InputMismatchException | NumberFormatException ex) {
             String msg = "Format error on line "+lineNum+" of histogram input string - "+ex.getMessage();
+            logger.error(msg, ex);
             throw new IllegalArgumentException(msg, ex);
         } catch (NoSuchElementException | IllegalStateException ex) {
             String msg = "Unexpected EOF while scanning histogram input string - "+ex.getMessage();
+            logger.error(msg, ex);
             throw new IllegalArgumentException(msg, ex);
         } finally {
             if (null != scanner) {
