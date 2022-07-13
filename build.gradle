@@ -5,7 +5,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 
-mainClassName = "imsam.scaffoldImportanceSampling"
+mainClassName = "imsam.Main"
 
 sourceCompatibility = 13
 targetCompatibility = 13
@@ -53,6 +53,7 @@ dependencies {
     // Declare any new dependencies here using the
     // libBundle configuration
     libBundle "org.json:json:20220320"
+    libBundle "args4j:args4j:2.33"
     configurations.implementation.extendsFrom(configurations.libBundle)
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
