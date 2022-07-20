@@ -42,21 +42,37 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
  ## Run:
 
-- Simulations can be run using `./bin/run.sh` from the repository root directory
-- The Sparse Model Generator can be run using `PRISM_MAINCLASS=imsam.SparseModelGenerator ./bin/run.sh`.
+- Simulations can be run using `./bin/run.sh simulate`
+    - TODO: options
+- The Sparse Model Generator can be run using `./bin/run.sh generate`
+    - TODO: options
 
 <br><br>
 
 # Development
 
-Example model generator config file
+## VS Code Environment
+
+If using WSL , the following configuration is recommended.
+  1. Clone repo to windows filesystem. ex: `C:/Users/*\<username\>*/git-clones/
+  2. Create a symlink in WSL by running
+  ```ln -s /mnt/c/Users/*\<username\>*/git-clones/usu_importance_sampling ~/```
+  3. Open VS code and install the `Remote - WSL` extension.
+  4. Click the bottom-left green button and open a WSL instance.
+
+### Extensions
+- Extension Pack for Java
+- GitLens (Optional, but recommended)
+- Code Spell Checker (Optional, but recommended)
+
+## Example model generator config file
 
 ```json
 {
     "numberOfModels": 10,   // number of models to generate
     "numberOfStates": 100,  // number of states in each model
     "targetState": 99,      // the target state used when generating the seed path
-    "outputFilename": "sparse-model%i.pm",      // name of Prism output file, can include placeholders
+    "outputFilename": "sparse-model-%i.pm",      // name of Prism output file, can include placeholders
     "transitionCountDistribution": {
         "type": "discrete",     // probability distributions must always include a type
         "values": {             // key-value pairs for discrete distributions
@@ -69,11 +85,13 @@ Example model generator config file
     },
     "transitionRateDistribution": {
         "type": "uniform-int",
-        "min": 1,               // minimum value (inclusive)
-        "max": 10,              // maximum value (inclusive)
+        "seed": 26152745,       // optionally specify random generator seed
+        "min": 1,               // minimum value (inclusive; default=0)
+        "max": 10,              // maximum value (inclusive; required)
     }
 }
 ```
+
 ## Using Libraries
 
 - `org.kohsuke.args4j`
