@@ -176,18 +176,28 @@ probabilities.
 
         ArrayList<Pair<T, Double>> itemProbabilityPairs;
     }
+    
+    public static void printUsage() {
+	System.out.println("java SparseModelGenerator numStates maxRate distFile"); 
+    }
 
     public static void main(String[] args) throws Exception {
         if(!(args.length > 0)){
-            System.out.println("Error");
+            System.out.println("Error: no arguments specified.");
+	    SparseModelGenerator.printUsage();
             return;   
         };
-        String temp = args[1];
+        String temp = args[0];
         int numberOfStates = Integer.parseInt(temp);
         SparseModelGenerator newModel = new SparseModelGenerator(numberOfStates);
-        temp = args[2];
+        temp = args[1];
         int transitionRate = Integer.parseInt(temp) - 1;
-        String filename = args[3];
+        String filename = args[2];
+	
+	System.out.println("Number of states:    " + args[0]);
+	System.out.println("Max transition rate: " + args[1]);
+	System.out.println("Output file:         " + args[2]);
+
         newModel.makeGraph(transitionRate,filename);
         newModel.printGraph("PrismFile.pm");
 
