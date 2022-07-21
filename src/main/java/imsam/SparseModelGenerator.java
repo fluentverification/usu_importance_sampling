@@ -60,7 +60,7 @@ public class SparseModelGenerator {
             for(int count2 = 0; count2 < firstChoice; count2++) {
                 int successor = (int) (Math.random() * graphSize);
                 if(count != successor){
-                    graph[count].add(new Node(count, successor, rand.random()));
+                    graph[count].add(new Node(count, successor, rand.random() + 1));
                 }
             }
         }
@@ -178,17 +178,16 @@ probabilities.
     }
 
     public static void main(String[] args) throws Exception {
-        Scanner input1 = new Scanner(System.in);
-        System.out.print("Enter the number of States: ");
-        int numberOfStates = input1.nextInt();
+        if(!(args.length > 0)){
+            System.out.println("Error");
+            return;   
+        };
+        String temp = args[1];
+        int numberOfStates = Integer.parseInt(temp);
         SparseModelGenerator newModel = new SparseModelGenerator(numberOfStates);
-
-        Scanner input2 = new Scanner(System.in);
-        System.out.print("Enter the max transition rate: ");
-        int transitionRate = input2.nextInt();
-        Scanner input3 = new Scanner(System.in);
-        System.out.print("Enter the Diogram of Transition probabilities: ");
-        String filename = input3.nextLine();
+        temp = args[2];
+        int transitionRate = Integer.parseInt(temp) - 1;
+        String filename = args[3];
         newModel.makeGraph(transitionRate,filename);
         newModel.printGraph("PrismFile.pm");
 
