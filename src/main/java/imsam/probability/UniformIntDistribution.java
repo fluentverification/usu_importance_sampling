@@ -2,11 +2,21 @@ package imsam.probability;
 
 import java.util.Random;
 
-import imsam.probability.ProbabilityDistribution;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class UniformIntDistribution implements ProbabilityDistribution {
 
+    public static final String TYPE_KEY = "uniform-int";
+
+    public static UniformIntDistribution fromJSON(JSONObject json) throws JSONException {
+        return new UniformIntDistribution(json);
+    }
+
+
+
+    
     private final int min;
     private final int max;
     private final Random rand;
@@ -30,6 +40,20 @@ public class UniformIntDistribution implements ProbabilityDistribution {
         this.rand = new Random(seed);
         this.min  = min;
         this.max  = max;
+    }
+
+    public UniformIntDistribution(JSONObject json) throws JSONException {
+        this.max = json.getInt("max");
+        if (json.has("min")) {
+            this.min = json.getInt("min");
+        } else {
+            this.min = 0;
+        }
+        if (json.has("seed")) {
+            this.rand = new Random(json.getLong("seed"));
+        } else {
+            this.rand = new Random();
+        }
     }
 
 

@@ -2,94 +2,224 @@ package imsam;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.lang.Exception;
-import java.lang.Math;
-import java.lang.Double;
-import java.util.Scanner;
-import java.io.File;
-import java.util.Random;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.kohsuke.args4j.Option;
 
 import imsam.probability.ProbabilityDistribution;
 import imsam.probability.UniformIntDistribution;
 
+/**
+ * TODO
+ */
+public class SparseModelGenerator implements Callable<Integer> {
 
-public class SparseModelGenerator {
-    class Node{ // Node clas is used to track each connection//
-        int start;
-        int end;
-        double rate;
-        Node(int begin, int result, double transition){
-            start = begin;
-            end = result;
-            rate = transition;
+    //////////////////////////////////////////////////
+    // CLI Arguments
+
+    @Option(name="-I",usage="number of models to generate; iterations. default: 1")
+    public int iterations = -1;
+
+    @Option(name="-N",usage="number of states to generate. default: 10")
+    public int numberOfStates = -1;
+
+    @Option(name="-target-state",usage="index of the target state (zero indexed). default: 1")
+    public int targetState = -1;
+
+    @Option(name="-output",usage="name of the output Prism file. default: sparse-model.pm")
+    public String outputFilename = "";
+
+    @Option(name="-config",usage="model generator config json file. See README for examples.")
+    public String configFilename = "";
+
+    // end CLI Arguments
+    //////////////////////////////////////////////////
+
+    ProbabilityDistribution transitionCountDistribution = null;
+    ProbabilityDistribution transitionRateDistribution = null;
+    State[] stateSpace = null;
+    String seedPath = "";
+
+    /**
+     * Default constructor should only be called by args4j,
+     * otherwise use constructor with arguments.
+     */
+    public SparseModelGenerator() {
+        // Nothing to do
+    }
+
+    /**
+     * Constructor with arguments that setup all required parameters.
+     * Note that outputPrismFilename has a default value, but can be
+     * changed with setOutputPrismFile() method.
+     * @param numberOfStates number of states in the model
+     * @param transitionFilename
+     * @param targetState
+     */
+    public SparseModelGenerator(int numberOfStates,
+                                int targetState,
+                                ProbabilityDistribution transitionCountDistribution,
+                                ProbabilityDistribution transitionRateDistribution,
+                                String outputFilename)
+    {
+        this.numberOfStates = numberOfStates;
+        this.targetState = targetState;
+        this.transitionCountDistribution = transitionCountDistribution;
+        this.transitionRateDistribution = transitionRateDistribution;
+        this.outputFilename = outputFilename;
+    }
+
+    /**
+     * This function reads parameters from the config file
+     * if one is provided. CLI and constructor arguments take
+     * priority over config file values. This method must ensure
+     * that all required variables are set. It can also be used to
+     * reset the state space to be run again.
+     */
+    public void init() throws IllegalArgumentException, JSONException, IOException {
+        // Read values from config file. CLI args take priority
+        if (!configFilename.isBlank()) {
+            Path filepath = Path.of(configFilename);
+            String str = Files.readString(filepath);
+            JSONObject json = new JSONObject(str);
+            if (-1 == iterations && json.has("iterations")) {
+                iterations = json.getInt("iterations");
+            }
+            if (-1 == numberOfStates && json.has("numberOfStates")) {
+                numberOfStates = json.getInt("numberOfStates");
+            }
+            if (-1 == targetState && json.has("targetState")) {
+                targetState = json.getInt("targetState");
+            }
+            if (!outputFilename.isBlank() && json.has("outputFilename")) {
+                outputFilename = json.getString("outputFilename");
+            }
+            if (json.has("transitionCountDistribution")) {
+                transitionCountDistribution = ProbabilityDistribution.ParseJson(
+                        json.getJSONObject("transitionCountDistribution")
+                );
+            }
+            if (json.has("transitionRateDistribution")) {
+                transitionRateDistribution = ProbabilityDistribution.ParseJson(
+                        json.getJSONObject("transitionRateDistribution")
+                );
+            }
+        }
+        // Argument checking and set defaults
+        if (-1 == iterations) {
+            iterations = 1;
+        } else if (iterations < 1) {
+            String errMsg = "Number of iterations must be positive, non-zero";
+            System.err.println(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        if (-1 == numberOfStates) {
+            numberOfStates = 10;
+        } else if (numberOfStates < 2) {
+            String errMsg = "Model must have at least 2 states";
+            System.err.println(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        if (-1 == targetState) {
+            targetState = 1;
+        } else if (targetState >= numberOfStates || targetState < 0) {
+            String errMsg = "Target state must be in the state space!";
+            System.err.println(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        if (null == transitionCountDistribution) {
+            transitionCountDistribution = new UniformIntDistribution(1,4);
+        }
+        if (null == transitionRateDistribution) {
+            transitionRateDistribution = new UniformIntDistribution(1, 10);
         }
     }
-    int graphSize;
-    ArrayList<Node>[] graph; //Array list to track all transitions to and from states in the graph//
 
-    SparseModelGenerator(int size){ //Makes a object for a new graph//
-        graphSize = size;
-        graph = new ArrayList[graphSize];
+    @Override
+    public Integer call() throws IllegalArgumentException, JSONException, IOException{
+        init();
+        for (int i=0; i<iterations; i++) {
+            generateModel();
+            generateSeedPath();
+            savePrismFile(i);
+        }
+        return 0;
     }
 
-    public void makeProb(String filename, ArrayList<Pair<Integer, Double>> itemProbabilityPairs) throws Exception {
-        if (itemProbabilityPairs == null) {
-            throw new NullPointerException("Item probability pairs is null!");
+    protected void generateModel() {
+        stateSpace = new State[numberOfStates];
+        // Initialize State objects
+        for (int stateId=0; stateId<numberOfStates; stateId++) {
+            stateSpace[stateId] = new State(stateId);
         }
-        File input = new File(filename);
-        Scanner fileReader = new Scanner(input);
-        int state;
-        double prob;
-        while (fileReader.hasNextInt() && fileReader.hasNextDouble()){
-            state = fileReader.nextInt();
-            prob = fileReader.nextDouble();
-            itemProbabilityPairs.add(new Pair<Integer, Double>(state, prob));
-        }
-
-    }
-
-    public void makeGraph(int rate, String file) throws Exception {
-        ArrayList<Pair<Integer, Double>> itemProbabilityPairs = new ArrayList<Pair<Integer,Double>>();
-        makeProb(file, itemProbabilityPairs);
-        SpecifiedDegreeDistribution<Integer> dist = new SpecifiedDegreeDistribution<Integer>(itemProbabilityPairs);
-        ProbabilityDistribution rand = new UniformIntDistribution(1, rate);
-        for(int count = 0; count < graphSize; count++){
-            graph[count] = new ArrayList<Node>();
-            int firstChoice = dist.get();
-            for(int count2 = 0; count2 < firstChoice; count2++) {
-                int successor = (int) (Math.random() * graphSize);
-                if(count != successor){
-                    graph[count].add(new Node(count, successor, rand.random()));
+        for (int stateId=0; stateId<numberOfStates; stateId++) {
+            stateSpace[stateId] = new State(stateId);
+            int transitionCount = (int) transitionCountDistribution.random();
+            for (int transitionId = 0; transitionId < transitionCount; transitionId++) {
+                int successor = (int) (Math.random() * numberOfStates);
+                if (stateId != successor) {
+                    TransitionPath transition = new TransitionPath(
+                            stateId,
+                            successor, 
+                            transitionRateDistribution.random()
+                    );
+                    stateSpace[stateId].transitionsOut.add(transition);
+                    stateSpace[successor].transitionsIn.add(transition);
                 }
             }
         }
         int temp = 0;
-        boolean[] seedTracker = new boolean[graphSize];
+        boolean[] seedTracker = new boolean[numberOfStates];
         seedTracker[0] = true;
-        for(int count = 0; count < graphSize - 1; count++){
-            int successor = (int) (Math.random() * graphSize);
-            while(seedTracker[successor]){
-                successor = (int) (Math.random() * graphSize);
+        for (int stateId=0; stateId<numberOfStates; stateId++) {
+            int successor = (int) (Math.random() * numberOfStates);
+            while (seedTracker[successor]) {
+                successor = (int) (Math.random() * numberOfStates);
             }
-            if(temp != successor) {
-                graph[temp].add(new Node(temp, successor, rand.random()));
+            if (temp != successor) {
+                TransitionPath transition = new TransitionPath(
+                        stateId,
+                        successor,
+                        transitionRateDistribution.random()
+                );
+                stateSpace[stateId].transitionsOut.add(transition);
+                stateSpace[successor].transitionsIn.add(transition);
             }
+            seedTracker[successor] = true;
+            temp = successor;
             seedTracker[successor] = true;
             temp = successor;
         }
     }
-    public void printGraph(String fileName1) throws IOException {
-        FileWriter writer = new FileWriter(fileName1);
+
+    protected void generateSeedPath() {
+        StringBuilder strBldr = new StringBuilder();
+        int tracker = 0;
+        while(tracker != targetState) {
+            strBldr.append(tracker + ",");
+            tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
+        }
+        strBldr.append(tracker + "\n");
+        seedPath = strBldr.toString();
+    }
+
+    protected void savePrismFile(int iteration) throws IOException {
+        FileWriter writer = new FileWriter(resolvePlaceholders(outputFilename, iteration));
         writer.write("ctmc\n");
-        for(int count = 0; count < graphSize; count++){
-            writer.write("[] x="+ count + " -> ");
-            for(int count2 = 0; count2 < graph[count].size(); count2++) {
-                writer.write((int) graph[count].get(count2).rate +":(x'=" + graph[count].get(count2).end + ")");
-                if(count2 + 1 < graph[count].size()){
+        for (int i=0; i<numberOfStates; i++) {
+            writer.write("[] x=" + i + " - > ");
+            for (int i2=0; i2<numberOfStates; i2++) {
+                TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
+                writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
+                if (i2+1 < stateSpace[i].transitionsOut.size()) {
                     writer.write(" + ");
-                }
-                else{
+                } else {
                     writer.write(";\n");
                 }
             }
@@ -97,111 +227,31 @@ public class SparseModelGenerator {
         writer.close();
     }
 
-    public void seedPath(int target, String fileName2) throws IOException {
-        FileWriter writer = new FileWriter(fileName2);
-        int tracker = 0;
-        while(tracker != target){
-            writer.write(tracker + ",");
-            tracker = graph[tracker].get((int) (Math.random() * graph[tracker].size())).end;
-        }
-
-        writer.write(target + "\n");
-        writer.close();
+    protected String resolvePlaceholders(String str, int iteration) {
+        return str.replaceAll("%i%",Integer.toString(iterations))
+                .replaceAll("%numberOfStates%",Integer.toString(numberOfStates))
+                .replaceAll("%targetState%",Integer.toString(targetState));
     }
 
-    /*
-SpecifiedDegreeDistribution Class
-Author: Josh Jeppson
-To use: create an ArrayList of items and their respective probabilities (must add up to 1)
-and will randomly choose based on the uniformly distributed Math.random() according to desired
-probabilities.
-*/
-
-    /**
-     * Simple pair class which contains items of two different types
-     */
-    class Pair<T, U> {
-        public T first;
-        public U second;
-        public Pair(T f, U s) {
-            first = f;
-            second = s;
+    protected class State {
+        int stateId;
+        List<TransitionPath> transitionsOut;
+        List<TransitionPath> transitionsIn;
+        State(int stateId) {
+            this.stateId = stateId;
+            transitionsOut = new ArrayList<>();
+            transitionsIn = new ArrayList<>();
         }
     }
-
-    public class SpecifiedDegreeDistribution<T> {
-        /**
-         * Constructor
-         *
-         * @param itemProbabilityPairs Items and probabilities they are chosen
-         * */
-        public SpecifiedDegreeDistribution(ArrayList<Pair<T, Double>> itemProbabilityPairs) throws Exception {
-            this.itemProbabilityPairs = itemProbabilityPairs;
-            checkItemProbabilityPairs();
-        }
-
-        /**
-         * Gets an item
-         *
-         * @return An item randomly chosen such that it matches the histogram
-         * */
-        public T get() {
-            double r = Math.random();
-            ArrayList<Pair<T, Double>> pairs = this.itemProbabilityPairs;
-            Double total = 0.00;
-            for (Pair<T, Double> pair : pairs) {
-                total += pair.second;
-                if (total >= r) {
-                    return pair.first;
-                }
-            }
-            return pairs.get(pairs.size() - 1).first;
-        }
-
-        /**
-         * Checks the item probability pairs to make sure that they have valid probabilities
-         *
-         * Throws an exception if total probability is greater than 1.0
-         */
-        private void checkItemProbabilityPairs() throws Exception {
-            ArrayList<Pair<T, Double>> pairs = this.itemProbabilityPairs;
-            Double total = 0.00;
-            for (Pair<T, Double> pair : pairs) {
-                total += pair.second;
-                if (total > 1) {
-                    throw new Exception("Total probability should not be greater than 1!");
-                }
-            }
-        }
-
-        ArrayList<Pair<T, Double>> itemProbabilityPairs;
-    }
-
-    public static void main(String[] args) throws Exception {
-        Scanner input1 = new Scanner(System.in);
-        System.out.print("Enter the number of States: ");
-        int numberOfStates = input1.nextInt();
-        SparseModelGenerator newModel = new SparseModelGenerator(numberOfStates);
-
-        Scanner input2 = new Scanner(System.in);
-        System.out.print("Enter the max transition rate: ");
-        int transitionRate = input2.nextInt();
-        Scanner input3 = new Scanner(System.in);
-        System.out.print("Enter the Diogram of Transition probabilities: ");
-        String filename = input3.nextLine();
-        newModel.makeGraph(transitionRate,filename);
-        newModel.printGraph("PrismFile.pm");
-
-        while(true) {
-            Scanner input4 = new Scanner(System.in);
-            System.out.print("\nEnter the Target State: ");
-            int target = input4.nextInt();
-            if(target >= numberOfStates || target < 0){
-                System.out.print("\nOut of Bounds");
-            }
-            else{
-                newModel.seedPath(target,"SeedPath.is");
-            }
+    protected class TransitionPath {
+        int start;
+        int end;
+        double rate;
+        TransitionPath(int start, int end, double rate) {
+            this.start = start;
+            this.end = end;
+            this.rate = rate;
         }
     }
+    
 }

@@ -8,8 +8,8 @@ import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Scanner;
-import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +32,8 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
 
     ///////////////////////////////////////////////////////////
     // Static Methods
+
+    public static final String TYPE_KEY = "discrete";
 
     /**
      * Reads a discrete distribution (histogram) from a tab, space, or comma
@@ -86,7 +88,9 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      * Reads a discrete distribution (histogram) from a JSON data string.
      * 
      * ex: 6-sided dice
-     *  {"1":"0.1667", "2":"0.1667", "3":"0.1667", "4":"0.1667", "5":"0.1667", "6":"0.1667"}
+     *  {"values":
+     *      {"1":"0.1667", "2":"0.1667", "3":"0.1667", "4":"0.1667", "5":"0.1667", "6":"0.1667"}
+     *  }
      * 
      * @param json input discrete distribution (histogram) data as JSON string
      * @return constructed DiscreteDistribution object
@@ -102,14 +106,19 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     public static DiscreteProbabilityDistribution fromJSON(JSONObject json) throws IllegalArgumentException {
         DiscreteProbabilityDistribution distribution;
-        distribution = new DiscreteProbabilityDistribution(json.length());
+        JSONObject values = json.getJSONObject("values");
+        if (json.has("seed")) {
+            distribution = new DiscreteProbabilityDistribution(values.length(), json.getLong("seed"));
+        } else {
+            distribution = new DiscreteProbabilityDistribution(json.length());
+        }
         try {
-            Iterator<String> keys = json.keys();
+            Iterator<String> keys = values.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
                 distribution.probabilities.add(new ProbabilityMapping(
                             Double.parseDouble(key),
-                            Double.parseDouble(json.get(key).toString())
+                            Double.parseDouble(values.get(key).toString())
                 ));
             }
         }
@@ -156,6 +165,8 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     private final List<ProbabilityMapping> probabilities;
 
+    private final Random rand;
+
     /**
      * Constructors are private. Use static methods to create
      * new class objects.
@@ -163,6 +174,7 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     private DiscreteProbabilityDistribution(int size) {
         this.probabilities = new ArrayList<ProbabilityMapping>(size);
+        this.rand = new Random();
     }
 
     /**
@@ -172,6 +184,17 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     private DiscreteProbabilityDistribution(List<ProbabilityMapping> probabilities) {
         this.probabilities = probabilities;
+        this.rand = new Random();
+    }
+
+    private DiscreteProbabilityDistribution(int size, long seed) {
+        this.probabilities = new ArrayList<ProbabilityMapping>(size);
+        this.rand = new Random(seed);
+    }
+
+    private DiscreteProbabilityDistribution(List<ProbabilityMapping> probabilities, long seed) {
+        this.probabilities = probabilities;
+        this.rand = new Random(seed);
     }
 
     /**
@@ -195,7 +218,15 @@ public class DiscreteProbabilityDistribution implements ProbabilityDistribution 
      */
     @Override
     public double random() {
-        return 0;
+        double x = rand.nextDouble();
+        double probSum = 0;
+        for (ProbabilityMapping probMapping : probabilities) {
+            probSum += probMapping.probability;
+            if (x <= probSum) {
+                return probMapping.value;
+            }
+        }
+        return probabilities.get(probabilities.size()-1).value;
     }
 
     /**

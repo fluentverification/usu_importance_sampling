@@ -6,12 +6,14 @@ fi
 
 # Class to run
 if [ "$PRISM_MAINCLASS" = "" ]; then
-	PRISM_MAINCLASS=imsam.scaffoldImportanceSampling
+	PRISM_MAINCLASS=imsam.Main
 fi
 
+# Locate imsam repository
+REPODIR="$(dirname "$(readlink -f "$0")")"/..
 
 # Set up CLASSPATH:
-PRISM_CLASSPATH=build/libs/*:"$PRISM_DIR"/prism:"$PRISM_DIR"/prism/classes:"$PRISM_DIR"/prism/lib/*
+PRISM_CLASSPATH="$REPODIR"/build/libs/*:"$PRISM_DIR"/prism:"$PRISM_DIR"/prism/classes:"$PRISM_DIR"/prism/lib/*
 
 # Set up pointers to libraries
 # As above, we look in both the top-level and the prism sub-directory
