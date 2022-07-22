@@ -40,6 +40,10 @@ import prism.PrismPrintStreamLog;
 import simulator.SimulatorEngine;
 
 import com.jenkov.cliargs.CliArgs;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
 
 /**
  * An example class demonstrating how to control PRISM programmatically,
@@ -52,6 +56,9 @@ import com.jenkov.cliargs.CliArgs;
 */
 public class scaffoldImportanceSampling
 {
+
+	final static Logger logger = LogManager.getLogger(scaffoldImportanceSampling.class);
+
     public static class  CliSwitches {
     
 	public  double             M       = 2; // transition multiplier
@@ -91,6 +98,9 @@ public class scaffoldImportanceSampling
 	//		new scaffoldImportanceSampling().run();
 	//System.out.println("Running scaffoldImportanceSampling");
 	//System.out.println(args.length + " arguments");
+
+	Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.DEBUG);
+	logger.info("The logger is working!");
 	
 	params = new CliSwitches();
 	CliArgs cliArgs = new CliArgs(args);
