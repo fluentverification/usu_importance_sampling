@@ -23,7 +23,7 @@ public class Main {
 
 
     public static void main(String[] args) {
-        Main main = new Main();
+        Main main = new Main();     // This is ugly, but an instance of the class is required by args4j
         CmdLineParser parser = new CmdLineParser(main);
         try {
             parser.parseArgument(args);
