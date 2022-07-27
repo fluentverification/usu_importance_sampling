@@ -19,7 +19,7 @@ import imsam.probability.UniformIntDistribution;
 /**
  * TODO
  */
-public class SparseModelGenerator implements Callable<Integer> {
+public class SparseModelGenerator extends Command {
 
     final static Logger logger = Main.getLogger(SparseModelGenerator.class);
 
@@ -157,7 +157,7 @@ public class SparseModelGenerator implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() throws IllegalArgumentException, JSONException, IOException{
+    public int exec() throws IllegalArgumentException, JSONException, IOException{
         init();
         for (int i=0; i<iterations; i++) {
             logger.info("Generating model " + (i+1) + "/" + iterations);
@@ -231,11 +231,11 @@ public class SparseModelGenerator implements Callable<Integer> {
         logger.debug("Output filename after resolving placeholders: '" + filename + "'");
         FileWriter writer = new FileWriter(filename);
         writer.write("ctmc\n\n");
-        writer.write("    // SeedPath:" + seedPath + "\n\n");
-        writer.write("    module M1\n");
-        writer.write("        x : [0.."+(numberOfStates-1)+"];\n");
+        writer.write("// SeedPath: " + seedPath + "\n\n");
+        writer.write("module M1\n");
+        writer.write("    x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
-            writer.write("        [] x=" + i + " -> ");
+            writer.write("    [] x=" + i + " -> ");
             for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
                 TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
                 writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
@@ -246,7 +246,7 @@ public class SparseModelGenerator implements Callable<Integer> {
                 }
             }
         }
-        writer.write("endmodule");
+        writer.write("endmodule\n");
         writer.close();
     }
 

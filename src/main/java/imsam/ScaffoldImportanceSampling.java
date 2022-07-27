@@ -47,11 +47,9 @@ import simulator.SimulatorEngine;
  * 
  * See the README for how to link this to PRISM.
 */
-public class ScaffoldImportanceSampling implements Callable<Integer> {
+public class ScaffoldImportanceSampling extends Command {
 
 	final static Logger logger = Main.getLogger(ScaffoldImportanceSampling.class);
-
-
 	
 
 	//////////////////////////////////////////////////
@@ -93,7 +91,7 @@ public class ScaffoldImportanceSampling implements Callable<Integer> {
 
 
 	@Override
-	public Integer call() {
+	public int exec() {
 
 		//System.out.println("Running scaffoldImportanceSampling");
 		//System.out.println(args.length + " arguments");

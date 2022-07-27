@@ -15,19 +15,10 @@ import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
 
 
-public class Main {
+public class Main extends Command {
 
     private static final LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
     public static final Logger logger = loggerContext.getRootLogger();
-
-    @Option(name="-v",usage="enable verbose logging (INFO level)")
-    protected boolean verboseInfo = false;
-
-    @Option(name="-vv",usage="enable verbose logging (DEBUG level)")
-    protected boolean verboseDebug = false;
-
-    @Option(name="-vvv",usage="enable verbose logging (TRACE level)")
-    protected boolean verboseTrace = false;
     
 
     @Argument(required=true,index=0,metaVar="command",usage="subcommands, e.g., {generate|simulate}",handler=SubCommandHandler.class)
@@ -36,11 +27,11 @@ public class Main {
         @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
         @SubCommand(name="sim",impl=ScaffoldImportanceSampling.class),
     })
-    protected Callable<Integer> command; // Use Callable instead of Runnable to allow exceptions
+    protected Command command; // Use Callable instead of Runnable to allow exceptions
 
 
     public static void main(String[] args) {
-        Main main = new Main();     // This is ugly, but an instance of the class is required by args4j
+        Main main = new Main();     // This looks weird, but an instance of the class is required by args4j
         CmdLineParser parser = new CmdLineParser(main);
         try {
             parser.parseArgument(args);
@@ -51,13 +42,20 @@ public class Main {
             } else if (main.verboseInfo) {
                 setLogLevel(Level.INFO);
             }
-            main.command.call();
+            main.command.entryPoint();
         } catch (CmdLineException ex) {
             System.err.println(ex.getMessage());
             return;
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
         }
+    }
+
+    @Override
+    protected int exec() {
+        // Only sub-commands need to use this method
+        // This class extends Command only to inherit generic args
+        return 0;
     }
 
 
