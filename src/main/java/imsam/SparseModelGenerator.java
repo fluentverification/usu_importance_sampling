@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.args4j.Option;
@@ -20,6 +21,8 @@ import imsam.probability.UniformIntDistribution;
  */
 public class SparseModelGenerator implements Callable<Integer> {
 
+    final static Logger logger = Main.getLogger(SparseModelGenerator.class);
+
     //////////////////////////////////////////////////
     // CLI Arguments
 
@@ -29,13 +32,13 @@ public class SparseModelGenerator implements Callable<Integer> {
     @Option(name="-N",usage="number of states to generate. default: 10")
     public int numberOfStates = -1;
 
-    @Option(name="-target-state",usage="index of the target state (zero indexed). default: 1")
+    @Option(name="--target-state",usage="index of the target state (zero indexed). default: 1")
     public int targetState = -1;
 
-    @Option(name="-output",usage="name of the output Prism file. default: sparse-model.pm")
+    @Option(name="--output",usage="name of the output Prism file. default: sparse-model.pm")
     public String outputFilename = "";
 
-    @Option(name="-config",usage="model generator config json file. See README for examples.")
+    @Option(name="--config",usage="model generator config json file. See README for examples.")
     public String configFilename = "";
 
     // end CLI Arguments
@@ -97,7 +100,7 @@ public class SparseModelGenerator implements Callable<Integer> {
             if (-1 == targetState && json.has("targetState")) {
                 targetState = json.getInt("targetState");
             }
-            if (!outputFilename.isBlank() && json.has("outputFilename")) {
+            if (outputFilename.isBlank() && json.has("outputFilename")) {
                 outputFilename = json.getString("outputFilename");
             }
             if (json.has("transitionCountDistribution")) {
@@ -116,22 +119,29 @@ public class SparseModelGenerator implements Callable<Integer> {
             iterations = 1;
         } else if (iterations < 1) {
             String errMsg = "Number of iterations must be positive, non-zero";
-            System.err.println(errMsg);
+            logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
         if (-1 == numberOfStates) {
             numberOfStates = 10;
         } else if (numberOfStates < 2) {
             String errMsg = "Model must have at least 2 states";
-            System.err.println(errMsg);
+            logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
         if (-1 == targetState) {
             targetState = 1;
         } else if (targetState >= numberOfStates || targetState < 0) {
             String errMsg = "Target state must be in the state space!";
-            System.err.println(errMsg);
+            logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
+        }
+        if (outputFilename.isBlank()) {
+            if (1 == iterations) {
+                outputFilename = "sparse-model.pm";
+            } else {
+                outputFilename = "sparse-model-%i%.pm";
+            }
         }
         if (null == transitionCountDistribution) {
             transitionCountDistribution = new UniformIntDistribution(1,4);
@@ -139,12 +149,18 @@ public class SparseModelGenerator implements Callable<Integer> {
         if (null == transitionRateDistribution) {
             transitionRateDistribution = new UniformIntDistribution(1, 10);
         }
+        logger.debug("Config File: '" + configFilename + "'");
+        logger.debug("Iterations: " + iterations);
+        logger.debug("Number of States: " + numberOfStates);
+        logger.debug("Target State: " + targetState);
+        logger.debug("Output File: " + outputFilename);
     }
 
     @Override
     public Integer call() throws IllegalArgumentException, JSONException, IOException{
         init();
         for (int i=0; i<iterations; i++) {
+            logger.info("Generating model " + (i+1) + "/" + iterations);
             generateModel();
             generateSeedPath();
             savePrismFile(i);
@@ -155,12 +171,15 @@ public class SparseModelGenerator implements Callable<Integer> {
     protected void generateModel() {
         stateSpace = new State[numberOfStates];
         // Initialize State objects
+        logger.debug("Initializing state space");
         for (int stateId=0; stateId<numberOfStates; stateId++) {
             stateSpace[stateId] = new State(stateId);
         }
+        logger.debug("Generating transitions");
         for (int stateId=0; stateId<numberOfStates; stateId++) {
             stateSpace[stateId] = new State(stateId);
             int transitionCount = (int) transitionCountDistribution.random();
+            logger.trace("Generating " + transitionCount + " transitions for state " + stateId);
             for (int transitionId = 0; transitionId < transitionCount; transitionId++) {
                 int successor = (int) (Math.random() * numberOfStates);
                 if (stateId != successor) {
@@ -174,10 +193,10 @@ public class SparseModelGenerator implements Callable<Integer> {
                 }
             }
         }
-        int temp = 0;
+        /*int temp = 0;
         boolean[] seedTracker = new boolean[numberOfStates];
         seedTracker[0] = true;
-        for (int stateId=0; stateId<numberOfStates; stateId++) {
+        for (int stateId=0; stateId+1<numberOfStates; stateId++) {
             int successor = (int) (Math.random() * numberOfStates);
             while (seedTracker[successor]) {
                 successor = (int) (Math.random() * numberOfStates);
@@ -193,9 +212,7 @@ public class SparseModelGenerator implements Callable<Integer> {
             }
             seedTracker[successor] = true;
             temp = successor;
-            seedTracker[successor] = true;
-            temp = successor;
-        }
+        }*/
     }
 
     protected void generateSeedPath() {
@@ -210,11 +227,13 @@ public class SparseModelGenerator implements Callable<Integer> {
     }
 
     protected void savePrismFile(int iteration) throws IOException {
-        FileWriter writer = new FileWriter(resolvePlaceholders(outputFilename, iteration));
+        String filename = resolvePlaceholders(outputFilename, iteration+1);
+        logger.debug("Output filename after resolving placeholders: '" + filename + "'");
+        FileWriter writer = new FileWriter(filename);
         writer.write("ctmc\n");
         for (int i=0; i<numberOfStates; i++) {
             writer.write("[] x=" + i + " - > ");
-            for (int i2=0; i2<numberOfStates; i2++) {
+            for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
                 TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
                 writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
                 if (i2+1 < stateSpace[i].transitionsOut.size()) {
