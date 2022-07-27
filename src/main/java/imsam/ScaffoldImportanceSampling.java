@@ -25,7 +25,6 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
 
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Option;
