@@ -15,10 +15,11 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 - Install the following packages (package names for Debian/Ubuntu Based):
     - openjdk-17-jdk *(or 13; 17 preferred)*
-    - gcc
-    - g++
-    - git
-    - make
+    - build-essential
+        - gcc
+        - g++
+        - git
+        - make
 - Clone this repository and run `./bin/initPrism.sh` to install Prism from source
 
 <br>
