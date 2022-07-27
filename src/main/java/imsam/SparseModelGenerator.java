@@ -222,7 +222,7 @@ public class SparseModelGenerator implements Callable<Integer> {
             strBldr.append(tracker + ",");
             tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
         }
-        strBldr.append(tracker + "\n");
+        strBldr.append(tracker);
         seedPath = strBldr.toString();
     }
 
@@ -231,6 +231,7 @@ public class SparseModelGenerator implements Callable<Integer> {
         logger.debug("Output filename after resolving placeholders: '" + filename + "'");
         FileWriter writer = new FileWriter(filename);
         writer.write("ctmc\n\n");
+        writer.write("// SeedPath:" + seedPath + "\n\n");
         writer.write("module M1\n");
         writer.write("x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
