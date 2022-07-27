@@ -33,9 +33,8 @@ public class Main {
     @Argument(required=true,index=0,metaVar="command",usage="subcommands, e.g., {generate|simulate}",handler=SubCommandHandler.class)
     @SubCommands({
         @SubCommand(name="generate",impl=SparseModelGenerator.class),
-        @SubCommand(name="simulate",impl=SimulateCommand.class),
-        @SubCommand(name="simulation",impl=SimulateCommand.class),
-        @SubCommand(name="sim",impl=SimulateCommand.class),
+        @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
+        @SubCommand(name="sim",impl=ScaffoldImportanceSampling.class),
     })
     protected Callable<Integer> command; // Use Callable instead of Runnable to allow exceptions
 
@@ -58,14 +57,6 @@ public class Main {
             return;
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
-        }
-    }
-
-
-    public static class SimulateCommand implements Callable<Integer> {
-        public Integer call() {
-            scaffoldImportanceSampling.main(new String[0]);
-            return 0;
         }
     }
 

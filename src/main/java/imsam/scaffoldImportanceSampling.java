@@ -5,7 +5,7 @@
 //             states from the successful path are added to a catalog.
 //             During path generation, at each transition, if the next state 
 //             is in the catalog, then the transition rate is enhanced by a 
-//             constant multipler M. Reverse transitions (back to the immediate last
+//             constant multiplier M. Reverse transitions (back to the immediate last
 //             state) are not enhanced.
 //
 //             The weighted path probability is computed
@@ -18,28 +18,25 @@
 
 package imsam;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
-
 import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.Callable;
 
-import parser.Values;
-import parser.ast.Expression;
+import org.apache.logging.log4j.Logger;
+import org.kohsuke.args4j.Option;
+
 import parser.ast.ModulesFile;
 import prism.Prism;
-import simulator.Path;
-import simulator.PathFull;
-import simulator.RandomNumberGenerator;
 import prism.PrismDevNullLog;
 import prism.PrismException;
 import prism.PrismLog;
-import prism.PrismPrintStreamLog;
+import simulator.RandomNumberGenerator;
 import simulator.SimulatorEngine;
-
-import com.jenkov.cliargs.CliArgs;
 
 /**
  * An example class demonstrating how to control PRISM programmatically,
@@ -50,68 +47,56 @@ import com.jenkov.cliargs.CliArgs;
  * 
  * See the README for how to link this to PRISM.
 */
-public class scaffoldImportanceSampling
-{
-    public static class  CliSwitches {
-    
-		public  double             M       = 2; // transition multiplier
-		public  int                TMAX    = 1000; // maximum transitions before truncating
-		public  int                Nruns   = 100000; // Number of stochastic runs
-		public  Boolean            raw     = false; 
-		public static String catalogFileName; 
-		public static String modelFileName;
+public class ScaffoldImportanceSampling implements Callable<Integer> {
 
-		public CliSwitches() {
-			catalogFileName = new String("models/abstract/10_states/10_states.is");
-			modelFileName   = new String("models/abstract/10_states/10_states.pm");
-		}
-
-		public void printSwitches() {
-			System.out.printf(" M=%f TMAX=%d Nruns=%d modelFile=%s ", M, TMAX, Nruns, modelFileName);
-		}
-		public void printRawSwitches() {
-			System.out.printf("%f\t%d\t%d", M, TMAX, Nruns);
-		}
-    }
-
-    public static CliSwitches params;
-
-    public static ArrayList<Integer> catalog = new ArrayList<Integer>();
+	final static Logger logger = Main.getLogger(ScaffoldImportanceSampling.class);
 
 
-    public static PrismLog           mainLog;
-    public static Prism              prism;
-    public static SimulatorEngine    sim;
+	
 
-    private static RandomNumberGenerator rng = new RandomNumberGenerator();
+	//////////////////////////////////////////////////
+    // CLI Arguments
+
+	@Option(name="-M",usage="Transition multiplier")
+	public double M = 2;
+
+	@Option(name="--Tmax",usage="Maximum transitions before truncating")
+	public int TMAX = 1000;
+
+	@Option(name="--Nruns",usage="Number of stochastic runs")
+	public int Nruns = 100000;
+
+	@Option(name="--raw",usage="Print raw output values")
+	public boolean raw = false;
+
+	@Option(name="--model",usage="Filename of prism model")
+	public String modelFileName = "models/abstract/10_states/10_states.pm";
+
+	public void printArgs() {
+		System.out.printf(" M=%f TMAX=%d Nruns=%d modelFile=%s ", M, TMAX, Nruns, modelFileName);
+	}
+	public void printRawArgs() {
+		System.out.printf("%f\t%d\t%d", M, TMAX, Nruns);
+	}
+
+	// end CLI Arguments
+    //////////////////////////////////////////////////
 
 
-    public static void main(String[] args)
-    {
-		//		new scaffoldImportanceSampling().run();
+    public List<Integer> catalog = new ArrayList<>();
+
+    public PrismLog           prismLog;
+    public Prism              prism;
+    public SimulatorEngine    sim;
+
+    private RandomNumberGenerator rng = new RandomNumberGenerator();
+
+
+	@Override
+	public Integer call() {
+
 		//System.out.println("Running scaffoldImportanceSampling");
 		//System.out.println(args.length + " arguments");
-		
-		params = new CliSwitches();
-		CliArgs cliArgs = new CliArgs(args);
-		params = cliArgs.switchPojo(CliSwitches.class);
-
-		/*
-		for (int i=0; i<args.length; i++)
-			System.out.println(args[i]);
-		
-		if (args.length > 0) 
-			modelFileName = args[0];
-		else
-			modelFileName = new String("models/abstract/10_states/10_states.pm");
-		if (args.length > 1) 
-			modelFileName = args[1];
-		else
-			catalogFileName = new String("models/abstract/10_states/10_states.is");
-
-		if (args.length > 2) 
-			TMAX = Integer.parseInt(args[2]);
-			*/
 
 		loadModel();
 		loadCatalog();
@@ -120,8 +105,8 @@ public class scaffoldImportanceSampling
 		double sum       = 0.0;
 		double squareSum = 0.0;
 
-		ArrayList samples = new ArrayList<Double>(params.Nruns);
-		for (int n=0; n < params.Nruns; n++) {
+		List<Double> samples = new ArrayList<>(Nruns);
+		for (int n=0; n < Nruns; n++) {
 			double sample = run();
 			sum += sample;
 
@@ -132,38 +117,41 @@ public class scaffoldImportanceSampling
 		
 		prism.closeDown();
 
-		double mean = sum/(double)params.Nruns;
+		double mean = sum/(double)Nruns;
 
-		for (int n=0; n<params.Nruns; n++) {
+		for (int n=0; n<Nruns; n++) {
 			double squareTerm = (double)samples.get(n) - mean;
 			squareSum += squareTerm*squareTerm; 
 		}
-		double variance = squareSum/((double)params.Nruns*((double)params.Nruns-1));
-		if (params.raw) {
+		double variance = squareSum/((double)Nruns*((double)Nruns-1));
+		if (raw) {
 			System.out.print(mean + "\t" + variance + "\t");
-			params.printRawSwitches();
+			printRawArgs();
 		}
 		else {
 			System.out.print(" Probability to reach final state: " + mean + ", Variance " + variance);
-			params.printSwitches();
+			printArgs();
 		}
 		System.out.println("");
-    }
 
-    public static void loadModel() 
+		return 0;
+
+	}
+
+    public void loadModel() 
     {
 		try {
 			//System.out.println("Loading PRISM model from " + params.modelFileName);
 
 			// Create a log for PRISM output (hidden or stdout)
-			mainLog = new PrismDevNullLog();
+			prismLog = new PrismDevNullLog();
 			
 			// Initialise PRISM engine 
-			prism = new Prism(scaffoldImportanceSampling.mainLog);
+			prism = new Prism(prismLog);
 			prism.initialise();
 			
 			// Parse and load a PRISM model from a file
-			ModulesFile modulesFile = prism.parseModelFile(new File(params.modelFileName));
+			ModulesFile modulesFile = prism.parseModelFile(new File(modelFileName));
 			prism.loadPRISMModel(modulesFile);
 			
 			// Load the model into the simulator
@@ -179,74 +167,71 @@ public class scaffoldImportanceSampling
 		}
     }
 
-    public static void printCatalog()
+    public void printCatalog()
     {
 		for (int i=0; i<catalog.size(); i++) {
 			System.out.println(catalog.get(i));
 		}
     }
 
-    public static void loadCatalog()
+    public void loadCatalog()
     {
+		BufferedReader reader = null;				// Declare outside of try block to be accessible from final block
 		try {
-			FileReader fr = new FileReader(params.catalogFileName);
-			BufferedReader br=new BufferedReader(fr);
-			String x;
-				
-			x=br.readLine(); 
-				
-
-			String[] states=x.split(",");
-			for (int i=0; i<states.length; i++) {
-			catalog.add(Integer.parseInt(states[i]));
+			reader = new BufferedReader(new FileReader(modelFileName));
+			String[] seedPathStr = reader.lines()
+					.filter(line -> line.matches("\\s*//\\s*SeedPath:\\s*\\d.*"))	// Filter lines to find Seed Path
+					.findFirst()													// Select first match only
+					.get()															// Throws NoSuchElementException if no match was found
+					.replaceFirst(".*SeedPath:\\s*","")								// Remove label
+					.split("\\s*,\\s*");											// Split on comma, allowing whitespace
+			for (String s : seedPathStr) {
+				catalog.add(Integer.parseInt(s));
 			}
-			
 		}
 		catch (FileNotFoundException e) {
 			System.out.println("Error: " + e.getMessage());
 			System.exit(1);
-		} 
-		catch (IOException e) {
-			System.out.println("Error: " + e.getMessage());
+		}
+		catch (NoSuchElementException e) {
+			System.out.println("Error: No seed path found");
 			System.exit(1);
+		}
+		finally {
+			if (null != reader) {
+				try {
+					reader.close();					// Close file, if it was opened
+				} catch (Exception e) { }			// Ignore errors when closing file
+			}
 		}
     }
 
-    public static void addToCatalog(Integer s)
+    public void addToCatalog(Integer s)
     {
 		if (catalog.indexOf(s) == -1)
 			catalog.add(s);
     }
 
-    public static Boolean inCatalog(Integer s)
+    public boolean inCatalog(Integer s)
     {
-	if (catalog.indexOf(s) == -1)
-	    return false;
-	else
-	    return true;
+		return catalog.indexOf(s) != -1;
     }
 
 
-    public static Boolean satisfyCatalogCondition(Integer currentState, Integer targetState, double rate)
+    public boolean satisfyCatalogCondition(int currentState, int targetState, double rate)
     {
-		if (inCatalog(targetState) && !inCatalog(currentState) && (rate > 0))
-			return true;
-		else
-			return false;
+		return inCatalog(targetState) && !inCatalog(currentState) && (rate > 0);
     }
 
 
-    public static Boolean stoppingCondition(int tdx, double path_probability)
+    public boolean stoppingCondition(int tdx, double path_probability)
     {
 		// path_probability currently not used
-
-		if (tdx > params.TMAX)
-			return true;
-		return false;
+		return tdx > TMAX;
     }
 
 
-    public static double run()
+    public double run()
     {
 		try {
 			sim.createNewPath();
@@ -257,7 +242,7 @@ public class scaffoldImportanceSampling
 			double total_rate           = 0.0;
 			double modified_total_rate  = 0.0;
 
-			ArrayList visitedStates = new ArrayList<Integer>(params.TMAX);
+			List<Integer> visitedStates = new ArrayList<>(TMAX);
 
 			// Simulate a path step-by-step:
 			for (int tdx=0; !stoppingCondition(tdx,path_probability); tdx++) {
@@ -267,8 +252,8 @@ public class scaffoldImportanceSampling
 
 				// Loop through the possible transitions from the current state:
 				Integer   numTransitions  = sim.getNumTransitions();
-				ArrayList transitionRates = new ArrayList<Double>(numTransitions);
-				ArrayList nativeRates     = new ArrayList<Double>(numTransitions);
+				List<Double> transitionRates = new ArrayList<>(numTransitions);
+				List<Double> nativeRates     = new ArrayList<>(numTransitions);
 				Integer   currentState    = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
 				
 				if (visitedStates.indexOf(currentState) == -1)
@@ -290,10 +275,10 @@ public class scaffoldImportanceSampling
 
 						Boolean alreadyVisited = (visitedStates.indexOf(transitionTarget) > -1);
 						if (inCatalog(transitionTarget) && !alreadyVisited) { 
-							transitionRates.set(idx, params.M*(double)transitionRates.get(idx));
+							transitionRates.set(idx, M*(double)transitionRates.get(idx));
 						}
 						else if (alreadyVisited)
-							transitionRates.set(idx, (1.0/params.M)*(double)transitionRates.get(idx));
+							transitionRates.set(idx, (1.0/M)*(double)transitionRates.get(idx));
 
 						modified_total_rate += (double) transitionRates.get(idx);
 					}

@@ -231,11 +231,11 @@ public class SparseModelGenerator implements Callable<Integer> {
         logger.debug("Output filename after resolving placeholders: '" + filename + "'");
         FileWriter writer = new FileWriter(filename);
         writer.write("ctmc\n\n");
-        writer.write("// SeedPath:" + seedPath + "\n\n");
-        writer.write("module M1\n");
-        writer.write("x : [0.."+(numberOfStates-1)+"];\n");
+        writer.write("    // SeedPath:" + seedPath + "\n\n");
+        writer.write("    module M1\n");
+        writer.write("        x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
-            writer.write("[] x=" + i + " -> ");
+            writer.write("        [] x=" + i + " -> ");
             for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
                 TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
                 writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
