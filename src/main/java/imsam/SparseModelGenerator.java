@@ -193,7 +193,7 @@ public class SparseModelGenerator implements Callable<Integer> {
                 }
             }
         }
-        /*int temp = 0;
+        int temp = 0;
         boolean[] seedTracker = new boolean[numberOfStates];
         seedTracker[0] = true;
         for (int stateId=0; stateId+1<numberOfStates; stateId++) {
@@ -212,7 +212,7 @@ public class SparseModelGenerator implements Callable<Integer> {
             }
             seedTracker[successor] = true;
             temp = successor;
-        }*/
+        }
     }
 
     protected void generateSeedPath() {
