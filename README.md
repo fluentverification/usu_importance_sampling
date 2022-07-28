@@ -83,7 +83,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 <br>
 
 ## Example model generator config file
-
+Note: JSON does not actually support comments
 ```json
 // Placeholders:
 //      %i% - the index of this model, from 1 to "iterations"
