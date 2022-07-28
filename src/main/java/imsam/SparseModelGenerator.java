@@ -82,6 +82,8 @@ public class SparseModelGenerator {
     public void printGraph(String fileName1) throws IOException {
         FileWriter writer = new FileWriter(fileName1);
         writer.write("ctmc\n");
+        writer.write("module M1");
+        writer.write("x : [0.." + (graphSize - 1) + "];");
         for(int count = 0; count < graphSize; count++){
             writer.write("[] x="+ count + " -> ");
             for(int count2 = 0; count2 < graph[count].size(); count2++) {
@@ -94,6 +96,7 @@ public class SparseModelGenerator {
                 }
             }
         }
+        writer.write("endmodule");
         writer.close();
     }
 
