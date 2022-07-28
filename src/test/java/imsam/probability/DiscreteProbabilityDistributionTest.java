@@ -3,8 +3,13 @@ package imsam.probability;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public class DiscreteProbabilityDistributionTest {
+
+    final static Logger logger = LogManager.getLogger(DiscreteProbabilityDistribution.class);
 
     @Test
     public void test_fromStringBasic() {
@@ -33,12 +38,17 @@ public class DiscreteProbabilityDistributionTest {
 
     @Test
     public void test_fromStringJSON() {
-        String testInput = "{\"1\":4,"
-                            + "\"2\":1,"
-                            + "\"3\":2,"
-                            + "\"4\":1,"
-                            + "\"5\":1,"
-                            + "\"6\":1}";
+        String testInput = "{\n"
+                            + "  \"type\": \"discrete\","
+                            + "  \"values\": {"
+                            + "    \"1\":4,"
+                            + "    \"2\":1,"
+                            + "    \"3\":2,"
+                            + "    \"4\":1,"
+                            + "    \"5\":1,"
+                            + "    \"6\":1"
+                            + "  },"
+                            + "}";
         DiscreteProbabilityDistribution distribution;
         distribution = DiscreteProbabilityDistribution.fromStringJSON(testInput);
         System.out.println("Testing method fromStringJSON():");
