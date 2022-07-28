@@ -200,7 +200,22 @@ public class MyClass extends Command {
 
 <br>
 
-## Using Libraries
+## Adding Dependencies/Libraries
 
-- `org.kohsuke.args4j`
-    - Here is the [javadoc](https://args4j.kohsuke.org/args4j/apidocs/). The `Option` class is the most used.
+Dependencies can easily be included from the maven central repository. You can find libraries by using
+[search.maven.org](https://search.maven.org/). There are a lot of libraries available, so make sure
+you are actually using the one you want. When looking for a library, ask if what you need is already
+available in a library that is already included. If not, try to find the most mainstream library and
+look at when it was last updated.
+
+The Apache POI library (MS Excel files) would be added by inserting the following in the `dependencies`
+section of `build.gradle`.
+```gradle
+dependencies {
+
+    libBundle "org.apache.poi:poi:5.2.2"
+    
+}
+```
+Tutorials will say to use `implementation` or `compile` instead of `libBundle`. The `libBundle` is a custom
+configuration used to bundling the libraries into a single jar file.
