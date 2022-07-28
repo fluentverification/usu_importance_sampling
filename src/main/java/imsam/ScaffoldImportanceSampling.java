@@ -66,7 +66,7 @@ public class ScaffoldImportanceSampling extends Command {
 	@Option(name="--raw",usage="Print raw output values")
 	public boolean raw = false;
 
-	@Option(name="--model",usage="Filename of prism model")
+	@Option(name="--model",usage="Prism model file name")
 	public String modelFileName = "models/abstract/10_states/10_states.pm";
 
 	public void printArgs() {
