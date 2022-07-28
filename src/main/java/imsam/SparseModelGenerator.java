@@ -196,21 +196,18 @@ probabilities.
 	
 	System.out.println("Number of states:    " + args[0]);
 	System.out.println("Max transition rate: " + args[1]);
-	System.out.println("Output file:         " + args[2]);
+	System.out.println("Transition file:         " + args[2]);
 
         newModel.makeGraph(transitionRate,filename);
         newModel.printGraph("PrismFile.pm");
 
-        while(true) {
-            Scanner input4 = new Scanner(System.in);
-            System.out.print("\nEnter the Target State: ");
-            int target = input4.nextInt();
-            if(target >= numberOfStates || target < 0){
-                System.out.print("\nOut of Bounds");
-            }
-            else{
-                newModel.seedPath(target,"SeedPath.is");
-            }
+        int target = numberOfStates - 1;
+        if(target >= numberOfStates || target < 0){
+             System.out.print("\nOut of Bounds");
         }
+        else{
+             newModel.seedPath(target,"SeedPath.is");
+        }
+        
     }
 }
