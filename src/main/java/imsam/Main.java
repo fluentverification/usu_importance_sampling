@@ -1,8 +1,11 @@
 package imsam;
 
+import java.util.Map;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -10,6 +13,8 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
+
+import imsam.mgen.MGenCommand;
 
 
 public class Main extends Command {
@@ -20,11 +25,12 @@ public class Main extends Command {
 
     @Argument(required=true,index=0,metaVar="command",usage="subcommands, e.g., {generate|simulate}",handler=SubCommandHandler.class)
     @SubCommands({
-        @SubCommand(name="generate",impl=SparseModelGenerator.class),
+        @SubCommand(name="generate",impl=MGenCommand.class),
+        @SubCommand(name="mgen",impl=MGenCommand.class),
         @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
         @SubCommand(name="sim",impl=ScaffoldImportanceSampling.class),
     })
-    protected Command command; // Use Callable instead of Runnable to allow exceptions
+    protected Command command;
 
 
     public static void main(String[] args) {
@@ -32,13 +38,7 @@ public class Main extends Command {
         CmdLineParser parser = new CmdLineParser(main);
         try {
             parser.parseArgument(args);
-            if (main.verboseTrace) {
-                setLogLevel(Level.TRACE);
-            } else if (main.verboseDebug) {
-                setLogLevel(Level.DEBUG);
-            } else if (main.verboseInfo) {
-                setLogLevel(Level.INFO);
-            }
+            main.readLoggingArgs();
             main.command.entryPoint();
         } catch (CmdLineException ex) {
             System.err.println(ex.getMessage());
@@ -61,6 +61,16 @@ public class Main extends Command {
                 .getLoggerConfig(LogManager.ROOT_LOGGER_NAME)
                 .setLevel(logLevel);
         loggerContext.updateLoggers();
+    }
+
+    public static void disableConsoleLogging() {
+        //loggerContext.getConfiguration()
+        //        .getAppender("stdout")
+        //        .stop();
+
+        Map<String, Appender> appenders = loggerContext.getConfiguration()
+                    .getAppenders();
+        appenders.forEach((name, appender) -> System.out.println(name));
     }
 
 

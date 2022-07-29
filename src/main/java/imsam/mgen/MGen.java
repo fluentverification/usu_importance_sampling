@@ -1,4 +1,4 @@
-package imsam;
+package imsam.mgen;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,15 +12,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.args4j.Option;
 
+import imsam.Command;
 import imsam.probability.ProbabilityDistribution;
 import imsam.probability.UniformIntDistribution;
 
-/**
- * TODO
- */
-public class SparseModelGenerator extends Command {
 
-    final static Logger logger = Main.getLogger(SparseModelGenerator.class);
+public abstract class MGen extends Command {
+
+    final static Logger logger = imsam.Main.getLogger(MGen.class);
+
+    
+    protected abstract void generateModel();
+
 
     //////////////////////////////////////////////////
     // CLI Arguments
@@ -43,39 +46,12 @@ public class SparseModelGenerator extends Command {
     // end CLI Arguments
     //////////////////////////////////////////////////
 
-    ProbabilityDistribution transitionCountDistribution = null;
-    ProbabilityDistribution transitionRateDistribution = null;
-    State[] stateSpace = null;
-    String seedPath = "";
 
-    /**
-     * Default constructor should only be called by args4j,
-     * otherwise use constructor with arguments.
-     */
-    public SparseModelGenerator() {
-        // Nothing to do
-    }
+    protected ProbabilityDistribution transitionCountDistribution = null;
+    protected ProbabilityDistribution transitionRateDistribution = null;
+    protected State[] stateSpace = null;
+    protected String seedPath = "";
 
-    /**
-     * Constructor with arguments that setup all required parameters.
-     * Note that outputPrismFilename has a default value, but can be
-     * changed with setOutputPrismFile() method.
-     * @param numberOfStates number of states in the model
-     * @param transitionFilename
-     * @param targetState
-     */
-    public SparseModelGenerator(int numberOfStates,
-                                int targetState,
-                                ProbabilityDistribution transitionCountDistribution,
-                                ProbabilityDistribution transitionRateDistribution,
-                                String outputFilename)
-    {
-        this.numberOfStates = numberOfStates;
-        this.targetState = targetState;
-        this.transitionCountDistribution = transitionCountDistribution;
-        this.transitionRateDistribution = transitionRateDistribution;
-        this.outputFilename = outputFilename;
-    }
 
     /**
      * This function reads parameters from the config file
@@ -90,28 +66,44 @@ public class SparseModelGenerator extends Command {
             Path filepath = Path.of(configFilename);
             String str = Files.readString(filepath);
             JSONObject json = new JSONObject(str);
-            if (-1 == iterations && json.has("iterations")) {
-                iterations = json.getInt("iterations");
-            }
-            if (-1 == numberOfStates && json.has("numberOfStates")) {
-                numberOfStates = json.getInt("numberOfStates");
-            }
-            if (-1 == targetState && json.has("targetState")) {
-                targetState = json.getInt("targetState");
-            }
-            if (outputFilename.isBlank() && json.has("outputFilename")) {
-                outputFilename = json.getString("outputFilename");
-            }
-            if (json.has("transitionCountDistribution")) {
-                transitionCountDistribution = ProbabilityDistribution.ParseJson(
-                        json.getJSONObject("transitionCountDistribution")
-                );
-            }
-            if (json.has("transitionRateDistribution")) {
-                transitionRateDistribution = ProbabilityDistribution.ParseJson(
-                        json.getJSONObject("transitionRateDistribution")
-                );
-            }
+            json.keys().forEachRemaining((key) -> {
+                switch (key) {
+                    case "iterations":
+                        if (-1 == iterations) {
+                            iterations = json.getInt(key);
+                        }
+                        break;
+                    case "numberOfStates":
+                        if (-1 == numberOfStates) {
+                            numberOfStates = json.getInt(key);
+                        }
+                        break;
+                    case "targetState":
+                        if (-1 == targetState) {
+                            targetState = json.getInt(key);
+                        }
+                        break;
+                    case "outputFilename":
+                        if (outputFilename.isBlank()) {
+                            outputFilename = json.getString(key);
+                        }
+                        break;
+                    case "transitionCountDistribution":
+                        transitionCountDistribution = ProbabilityDistribution.ParseJson(
+                            json.getJSONObject(key)
+                        );
+                        break;
+                    case "transitionRateDistribution":
+                        transitionRateDistribution = ProbabilityDistribution.ParseJson(
+                            json.getJSONObject(key)
+                        );
+                        break;
+                    default:
+                        if (!parseSubclassConfigParam(json, key)) {
+                            logger.warn("Unrecognized config option '" + key + "'");
+                        }
+                }
+            });
         }
         // Argument checking and set defaults
         if (-1 == iterations) {
@@ -129,7 +121,7 @@ public class SparseModelGenerator extends Command {
             throw new IllegalArgumentException(errMsg);
         }
         if (-1 == targetState) {
-            targetState = 1;
+            targetState = numberOfStates - 1;
         } else if (targetState >= numberOfStates || targetState < 0) {
             String errMsg = "Target state must be in the state space!";
             logger.error(errMsg);
@@ -153,7 +145,18 @@ public class SparseModelGenerator extends Command {
         logger.debug("Number of States: " + numberOfStates);
         logger.debug("Target State: " + targetState);
         logger.debug("Output File: " + outputFilename);
+        initSubclassParamDefaults();
     }
+
+
+    protected boolean parseSubclassConfigParam(JSONObject json, String key) {
+        return false;
+    }
+    
+    protected void initSubclassParamDefaults() {
+        // Intentionally left empty
+    }
+
 
     @Override
     public int exec() throws IllegalArgumentException, JSONException, IOException{
@@ -165,53 +168,6 @@ public class SparseModelGenerator extends Command {
             savePrismFile(i);
         }
         return 0;
-    }
-
-    protected void generateModel() {
-        stateSpace = new State[numberOfStates];
-        // Initialize State objects
-        logger.debug("Initializing state space");
-        for (int stateId=0; stateId<numberOfStates; stateId++) {
-            stateSpace[stateId] = new State(stateId);
-        }
-        logger.debug("Generating transitions");
-        for (int stateId=0; stateId<numberOfStates; stateId++) {
-            stateSpace[stateId] = new State(stateId);
-            int transitionCount = (int) transitionCountDistribution.random();
-            logger.trace("Generating " + transitionCount + " transitions for state " + stateId);
-            for (int transitionId = 0; transitionId < transitionCount; transitionId++) {
-                int successor = (int) (Math.random() * numberOfStates);
-                if (stateId != successor) {
-                    TransitionPath transition = new TransitionPath(
-                            stateId,
-                            successor, 
-                            transitionRateDistribution.random()
-                    );
-                    stateSpace[stateId].transitionsOut.add(transition);
-                    stateSpace[successor].transitionsIn.add(transition);
-                }
-            }
-        }
-        int temp = 0;
-        boolean[] seedTracker = new boolean[numberOfStates];
-        seedTracker[0] = true;
-        for (int stateId=0; stateId+1<numberOfStates; stateId++) {
-            int successor = (int) (Math.random() * numberOfStates);
-            while (seedTracker[successor]) {
-                successor = (int) (Math.random() * numberOfStates);
-            }
-            if (temp != successor) {
-                TransitionPath transition = new TransitionPath(
-                        stateId,
-                        successor,
-                        transitionRateDistribution.random()
-                );
-                stateSpace[stateId].transitionsOut.add(transition);
-                stateSpace[successor].transitionsIn.add(transition);
-            }
-            seedTracker[successor] = true;
-            temp = successor;
-        }
     }
 
     protected void generateSeedPath() {
@@ -250,10 +206,11 @@ public class SparseModelGenerator extends Command {
     }
 
     protected String resolvePlaceholders(String str, int iteration) {
-        return str.replaceAll("%i%",Integer.toString(iterations))
+        return str.replaceAll("%i%",Integer.toString(iteration))
                 .replaceAll("%numberOfStates%",Integer.toString(numberOfStates))
                 .replaceAll("%targetState%",Integer.toString(targetState));
     }
+
 
     protected class State {
         int stateId;
