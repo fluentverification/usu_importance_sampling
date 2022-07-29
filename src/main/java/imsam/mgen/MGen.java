@@ -66,28 +66,44 @@ public abstract class MGen extends Command {
             Path filepath = Path.of(configFilename);
             String str = Files.readString(filepath);
             JSONObject json = new JSONObject(str);
-            if (-1 == iterations && json.has("iterations")) {
-                iterations = json.getInt("iterations");
-            }
-            if (-1 == numberOfStates && json.has("numberOfStates")) {
-                numberOfStates = json.getInt("numberOfStates");
-            }
-            if (-1 == targetState && json.has("targetState")) {
-                targetState = json.getInt("targetState");
-            }
-            if (outputFilename.isBlank() && json.has("outputFilename")) {
-                outputFilename = json.getString("outputFilename");
-            }
-            if (json.has("transitionCountDistribution")) {
-                transitionCountDistribution = ProbabilityDistribution.ParseJson(
-                        json.getJSONObject("transitionCountDistribution")
-                );
-            }
-            if (json.has("transitionRateDistribution")) {
-                transitionRateDistribution = ProbabilityDistribution.ParseJson(
-                        json.getJSONObject("transitionRateDistribution")
-                );
-            }
+            json.keys().forEachRemaining((key) -> {
+                switch (key) {
+                    case "iterations":
+                        if (-1 == iterations) {
+                            iterations = json.getInt(key);
+                        }
+                        break;
+                    case "numberOfStates":
+                        if (-1 == numberOfStates) {
+                            numberOfStates = json.getInt(key);
+                        }
+                        break;
+                    case "targetState":
+                        if (-1 == targetState) {
+                            targetState = json.getInt(key);
+                        }
+                        break;
+                    case "outputFilename":
+                        if (outputFilename.isBlank()) {
+                            outputFilename = json.getString(key);
+                        }
+                        break;
+                    case "transitionCountDistribution":
+                        transitionCountDistribution = ProbabilityDistribution.ParseJson(
+                            json.getJSONObject(key)
+                        );
+                        break;
+                    case "transitionRateDistribution":
+                        transitionRateDistribution = ProbabilityDistribution.ParseJson(
+                            json.getJSONObject(key)
+                        );
+                        break;
+                    default:
+                        if (!parseSubclassConfigParam(json, key)) {
+                            logger.warn("Unrecognized config option '" + key + "'");
+                        }
+                }
+            });
         }
         // Argument checking and set defaults
         if (-1 == iterations) {
@@ -129,6 +145,16 @@ public abstract class MGen extends Command {
         logger.debug("Number of States: " + numberOfStates);
         logger.debug("Target State: " + targetState);
         logger.debug("Output File: " + outputFilename);
+        initSubclassParamDefaults();
+    }
+
+
+    protected boolean parseSubclassConfigParam(JSONObject json, String key) {
+        return false;
+    }
+    
+    protected void initSubclassParamDefaults() {
+        // Intentionally left empty
     }
 
 
