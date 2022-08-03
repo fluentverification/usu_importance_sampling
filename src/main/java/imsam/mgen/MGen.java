@@ -176,7 +176,11 @@ public abstract class MGen extends Command {
         int tracker = 0;
         while(tracker != targetState) {
             strBldr.append(tracker + ",");
-            tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
+            if(stateSpace[tracker].transitionsOut.size() != 0){
+                tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
+            }else{
+                break;
+            }
         }
         strBldr.append(tracker);
         seedPath = strBldr.toString();
