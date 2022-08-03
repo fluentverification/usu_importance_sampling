@@ -14,7 +14,6 @@ public class SparseModelGenerator extends MGen {
         }
         logger.debug("Generating transitions");
         for (int stateId=0; stateId<numberOfStates; stateId++) {
-            stateSpace[stateId] = new State(stateId);
             int transitionCount = (int) transitionCountDistribution.random();
             logger.trace("Generating " + transitionCount + " transitions for state " + stateId);
             for (int transitionId = 0; transitionId < transitionCount; transitionId++) {
