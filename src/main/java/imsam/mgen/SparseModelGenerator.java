@@ -34,10 +34,13 @@ public class SparseModelGenerator extends MGen {
         boolean[] seedTracker = new boolean[numberOfStates];
         seedTracker[0] = true;
         for (int stateId=0; stateId+1<numberOfStates; stateId++) {
+            //assign successor to a random state
             int successor = (int) (Math.random() * numberOfStates);
+            //Randomly move through state space until unvisited state is found
             while (seedTracker[successor]) {
                 successor = (int) (Math.random() * numberOfStates);
             }
+            //if successor is not the current state, create new transition
             if (temp != successor) {
                 TransitionPath transition = new TransitionPath(
                         stateId,
@@ -47,7 +50,9 @@ public class SparseModelGenerator extends MGen {
                 stateSpace[stateId].transitionsOut.add(transition);
                 stateSpace[successor].transitionsIn.add(transition);
             }
+            //set state as visited 
             seedTracker[successor] = true;
+            //set successor to be current state
             temp = successor;
         }
     }
