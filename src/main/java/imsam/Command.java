@@ -3,6 +3,14 @@ package imsam;
 import org.apache.logging.log4j.Level;
 import org.kohsuke.args4j.Option;
 
+/**
+ * Implementations of this abstract class are used to create the command
+ * hierarchy of the program. Work is performed by the exec() method. The
+ * entryPoint() method is called when passing control to a next level
+ * subcommand. Generic argument flags, such as logging directives, are
+ * implemented here to allow them to be inserted anywhere in the argument
+ * hierarchy.
+ */
 public abstract class Command {
 
     @Option(name="-v",usage="enable verbose logging (INFO level)")
@@ -18,13 +26,28 @@ public abstract class Command {
     protected boolean quietLogging = false;
 
 
+    /**
+     * This abstract method is where control is passed to subcommands.
+     * It should never actually be called outside entryPoint. Be sure
+     * to call the entryPoint method instead.
+     * @return system exit code
+     * @throws Exception can throw uncaught exceptions if it makes sense to do so
+     */
     protected abstract int exec() throws Exception;
 
+    /**
+     * This method parses any logging args, then executes the exec method
+     * @return system exit code
+     * @throws Exception can throw uncaught exceptions if it makes sense to do so
+     */
     public final int entryPoint() throws Exception {
-        readLoggingArgs();
+        readLoggingArgs();      // read any logging args provided after the command arg
         return exec();
     }
 
+    /**
+     * Parses the logging arguments that are available from any level of the command structure
+     */
     public final void readLoggingArgs() {
         if (verboseLogging3) {
             Main.setLogLevel(Level.TRACE);

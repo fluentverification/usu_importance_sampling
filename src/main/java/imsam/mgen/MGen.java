@@ -21,9 +21,7 @@ public abstract class MGen extends Command {
 
     final static Logger logger = imsam.Main.getLogger(MGen.class);
 
-    
     protected abstract void generateModel();
-
 
     //////////////////////////////////////////////////
     // CLI Arguments
@@ -47,12 +45,10 @@ public abstract class MGen extends Command {
     // end CLI Arguments
     //////////////////////////////////////////////////
 
-
     protected ProbabilityDistribution transitionCountDistribution = null;
     protected ProbabilityDistribution transitionRateDistribution = null;
     protected State[] stateSpace = null;
     protected String seedPath = "";
-
 
     /**
      * This function reads parameters from the config file
@@ -61,7 +57,7 @@ public abstract class MGen extends Command {
      * that all required variables are set. It can also be used to
      * reset the state space to be run again.
      */
-    public void init() throws IllegalArgumentException, JSONException, IOException {
+    public final void init() throws IllegalArgumentException, JSONException, IOException {
         // Read values from config file. CLI args take priority
         if (!configFilename.isBlank()) {
             Path filepath = Path.of(configFilename);
@@ -149,15 +145,29 @@ public abstract class MGen extends Command {
         initSubclassParamDefaults();
     }
 
-
+    /**
+     * This method can optionally be overridden by subclasses to implement
+     * parameters specific to that model generator. It is used to parse a
+     * parameter from the config file. Do not override a value that is
+     * already set; CLI args take priority. If the key is not a valid
+     * parameter, then return false.
+     * @param json config file as JSONObject
+     * @param key the key for the parameter to be parsed
+     * @return true if the key is valid, otherwise false
+     */
     protected boolean parseSubclassConfigParam(JSONObject json, String key) {
+        // No more parameters to parse. This key is invalid
         return false;
     }
     
+    /**
+     * This method can optionally be overridden by subclasses to implement
+     * parameters specific to that model generator. It is used to set the
+     * default value for these parameters if they have not already been set.
+     */
     protected void initSubclassParamDefaults() {
         // Intentionally left empty
     }
-
 
     @Override
     public int exec() throws IllegalArgumentException, JSONException, IOException{
@@ -220,7 +230,6 @@ public abstract class MGen extends Command {
                 .replaceAll("%targetState%",Integer.toString(targetState));
     }
 
-
     protected class State {
         int stateId;
         List<TransitionPath> transitionsOut;
@@ -231,6 +240,7 @@ public abstract class MGen extends Command {
             transitionsIn = new ArrayList<>();
         }
     }
+
     protected class TransitionPath {
         int start;
         int end;

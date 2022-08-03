@@ -62,6 +62,12 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `--output` | Name of the output Prism file (default: `sparse-model-%i%.pm`)
 | `--config` | Model generator json config file. See example below
 
+<br>
+
+The absolute path to `/.bin/run.sh` could be added to the user or system path
+as a symlink `imsam` if desired. Later version may have an install option to
+do this.
+
 <br><br>
 
 # Development
@@ -118,7 +124,7 @@ Note: JSON does not actually support comments
 
 ## Argument Parsing
 
-[Documentation link.](https://args4j.kohsuke.org/args4j/apidocs/) `Option` and `Argument` are the most useful.
+**[Documentation link.](https://args4j.kohsuke.org/args4j/apidocs/)** `Option` and `Argument` are the most useful.
 
 This utility uses the `org.kohsuke.args4j` library. The `Main` class handles parsing the
 arguments, then passes control to one of the subcommands. All subcommands extend the abstract
@@ -160,7 +166,7 @@ Verbose logging options are already implemented by the abstract class `Command`.
 
 ## Logging
 
-[Documentation link](https://logging.apache.org/log4j/2.x/manual/api.html)
+**[Documentation link](https://logging.apache.org/log4j/2.x/manual/api.html)**
 
 This utility uses the `org.apache.logging.log4j` library (log4j v2). The main configuration
 is in the `src/main/resources/log4j.properties` and setup is handled by `Main`. Each class
