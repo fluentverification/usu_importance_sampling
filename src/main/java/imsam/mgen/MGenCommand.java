@@ -18,7 +18,7 @@ public class MGenCommand extends Command {
 
     @Override
     protected int exec() throws Exception {
-        return generator.exec();
+        return generator.entryPoint();
     }
     
 }
