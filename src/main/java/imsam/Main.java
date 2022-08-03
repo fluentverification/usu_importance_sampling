@@ -41,13 +41,18 @@ public class Main extends Command {
     protected Command command;
 
 
+    /**
+     * Initialize an instance of main and a CmdLineParse. Parse
+     * args and move to main entryPoint. Exceptions should be caught
+     * and meaningful error messages given.
+     * @param args see README.md for details
+     */
     public static void main(String[] args) {
         Main main = new Main();     // This looks weird, but an instance of the class is required by args4j
         CmdLineParser parser = new CmdLineParser(main);
         try {
             parser.parseArgument(args);
-            main.readLoggingArgs();
-            main.command.entryPoint();  // read any logging args provided before the command arg
+            System.exit( main.entryPoint() );
         } catch (CmdLineException ex) {
             System.err.println(ex.getMessage());
             return;
@@ -56,10 +61,12 @@ public class Main extends Command {
         }
     }
 
+    /**
+     * This method just needs to pass control to subcommand
+     */
     @Override
-    protected int exec() {
-        // Only sub-commands need to use this method
-        // This class extends Command only to inherit generic args
+    protected int exec() throws Exception {
+        command.entryPoint();
         return 0;
     }
 
