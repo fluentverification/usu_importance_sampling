@@ -43,6 +43,7 @@ public abstract class MGen extends Command {
     @Option(name="--config",usage="model generator config json file. See README for examples.")
     public String configFilename = "";
 
+
     // end CLI Arguments
     //////////////////////////////////////////////////
 
@@ -191,13 +192,17 @@ public abstract class MGen extends Command {
         writer.write("    x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
             writer.write("    [] x=" + i + " -> ");
-            for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
-                TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
-                writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
-                if (i2+1 < stateSpace[i].transitionsOut.size()) {
-                    writer.write(" + ");
-                } else {
-                    writer.write(";\n");
+            if(stateSpace[i].transitionsOut.size() == 0){
+                writer.write(" true;\n");
+            }else{
+                for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
+                    TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
+                    writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
+                    if (i2+1 < stateSpace[i].transitionsOut.size()) {
+                        writer.write(" + ");
+                    } else {
+                        writer.write(";\n");
+                    }
                 }
             }
         }
