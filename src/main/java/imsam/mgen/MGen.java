@@ -231,7 +231,7 @@ public abstract class MGen extends Command {
             transitionsIn = new ArrayList<>();
         }
     }
-    
+
     protected class TransitionPath {
         int start;
         int end;

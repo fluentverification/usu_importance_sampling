@@ -21,7 +21,7 @@ public abstract class Command {
     protected abstract int exec() throws Exception;
 
     public final int entryPoint() throws Exception {
-        readLoggingArgs();
+        readLoggingArgs();      // read any logging args provided after the command arg
         return exec();
     }
 
