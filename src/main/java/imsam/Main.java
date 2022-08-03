@@ -19,7 +19,15 @@ import imsam.mgen.MGenCommand;
 
 public class Main extends Command {
 
+    /**
+     * The logger context is used to set settings
+     */
     private static final LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+    
+    /**
+     * This is the root logger for this program. Other classes should
+     * usually use `Main.getLogger()` and have their own.
+     */
     public static final Logger logger = loggerContext.getRootLogger();
     
 
@@ -39,7 +47,7 @@ public class Main extends Command {
         try {
             parser.parseArgument(args);
             main.readLoggingArgs();
-            main.command.entryPoint();
+            main.command.entryPoint();  // read any logging args provided before the command arg
         } catch (CmdLineException ex) {
             System.err.println(ex.getMessage());
             return;
@@ -56,6 +64,10 @@ public class Main extends Command {
     }
 
 
+    /**
+     * Set the logging level for all loggers
+     * @param logLevel new log level
+     */
     public static void setLogLevel(Level logLevel) {
         loggerContext.getConfiguration()
                 .getLoggerConfig(LogManager.ROOT_LOGGER_NAME)
@@ -63,17 +75,26 @@ public class Main extends Command {
         loggerContext.updateLoggers();
     }
 
+    /**
+     * Doesn't work right now!!!
+     */
     public static void disableConsoleLogging() {
         //loggerContext.getConfiguration()
         //        .getAppender("stdout")
         //        .stop();
 
+        // Work in progress...
         Map<String, Appender> appenders = loggerContext.getConfiguration()
                     .getAppenders();
         appenders.forEach((name, appender) -> System.out.println(name));
     }
 
 
+    /**
+     * Get a new logger for the provided class
+     * @param clazz the class this logger belongs to
+     * @return a new logger for this class
+     */
     public static Logger getLogger(Class<?> clazz) {
         return loggerContext.getLogger(clazz);
     }

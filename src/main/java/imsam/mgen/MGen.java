@@ -21,9 +21,7 @@ public abstract class MGen extends Command {
 
     final static Logger logger = imsam.Main.getLogger(MGen.class);
 
-    
     protected abstract void generateModel();
-
 
     //////////////////////////////////////////////////
     // CLI Arguments
@@ -46,12 +44,10 @@ public abstract class MGen extends Command {
     // end CLI Arguments
     //////////////////////////////////////////////////
 
-
     protected ProbabilityDistribution transitionCountDistribution = null;
     protected ProbabilityDistribution transitionRateDistribution = null;
     protected State[] stateSpace = null;
     protected String seedPath = "";
-
 
     /**
      * This function reads parameters from the config file
@@ -148,7 +144,6 @@ public abstract class MGen extends Command {
         initSubclassParamDefaults();
     }
 
-
     /**
      * This method can optionally be overridden by subclasses to implement
      * parameters specific to that model generator. It is used to parse a
@@ -172,7 +167,6 @@ public abstract class MGen extends Command {
     protected void initSubclassParamDefaults() {
         // Intentionally left empty
     }
-
 
     @Override
     public int exec() throws IllegalArgumentException, JSONException, IOException{
@@ -227,7 +221,6 @@ public abstract class MGen extends Command {
                 .replaceAll("%targetState%",Integer.toString(targetState));
     }
 
-
     protected class State {
         int stateId;
         List<TransitionPath> transitionsOut;
@@ -238,6 +231,7 @@ public abstract class MGen extends Command {
             transitionsIn = new ArrayList<>();
         }
     }
+    
     protected class TransitionPath {
         int start;
         int end;
