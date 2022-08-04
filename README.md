@@ -43,6 +43,15 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
  ## Usage:
 
+ ### Common Arguments
+
+ |   |   |
+ |---|---|
+ | `-v` | Verbose logging (Info level) |
+ | `-vv` | Verbose logging (Debug level) |
+ | `-vvv` | Verbose logging (Trace level) |
+ | `--quiet` | Suppress logging to console, except for errors |
+
 ### Scaffold Importance Sampling
 
 | Usage: | `./bin/run.sh simulate [OPTION]...` |
