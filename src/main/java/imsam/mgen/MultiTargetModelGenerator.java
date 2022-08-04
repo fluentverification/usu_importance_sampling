@@ -11,11 +11,12 @@ import org.kohsuke.args4j.Option;
  * This is a model generator that will accept a list of target states and force all paths to converge on one of said states
  * 
  * //TODO//
- * Add support for user-defined multiple target states
+ * Check if target list is in state space
+ * Fix GenerateSeedPath
  * 
  * @author Eric Reiss
  */
-public class TerminatingPathModelGenerator extends MGen{
+public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     
     @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")

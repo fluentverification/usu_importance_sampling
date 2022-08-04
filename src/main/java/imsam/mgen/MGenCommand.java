@@ -12,7 +12,7 @@ public class MGenCommand extends Command {
     @Argument(required=true,index=0,metaVar="generator",usage="model generator algorithm, e.g., {sparse}",handler=SubCommandHandler.class)
     @SubCommands({
         @SubCommand(name="sparse",impl=SparseModelGenerator.class),
-        @SubCommand(name="multi-target", impl=TerminatingPathModelGenerator.class),
+        @SubCommand(name="multi-target", impl=MultiTargetModelGenerator.class),
     })
     protected MGen generator;
 
