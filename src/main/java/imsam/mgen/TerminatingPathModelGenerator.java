@@ -3,7 +3,6 @@ package imsam.mgen;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.message.ExitMessage;
 import org.json.JSONObject;
 import org.kohsuke.args4j.Option;
 
