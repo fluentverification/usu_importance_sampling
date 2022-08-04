@@ -48,9 +48,10 @@ public class MultiTargetModelGenerator extends MGen{
             for(String targetString : parsedTargetList){
                 try{
                     int targetCandidate = Integer.parseInt(targetString);
-                    if(targetCandidate > (numberOfStates-1)){
-                        String errMsg = "Targets must be in the state space";
+                    if(targetCandidate>numberOfStates-1 || targetCandidate==0){
+                        String errMsg = "Targets must be in the state space and cannot be the initial state";
                         logger.error(errMsg);
+                        System.exit(1);
                     }else{
                         logger.debug("adding "+ targetCandidate+ " to target ArrayList");
                         targets.add(targetCandidate);
