@@ -1,12 +1,13 @@
 package imsam;
 
-import java.util.Map;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -83,17 +84,17 @@ public class Main extends Command {
     }
 
     /**
-     * Doesn't work right now!!!
+     * Disable logging to console, except errors
      */
     public static void disableConsoleLogging() {
-        //loggerContext.getConfiguration()
-        //        .getAppender("stdout")
-        //        .stop();
-
-        // Work in progress...
-        Map<String, Appender> appenders = loggerContext.getConfiguration()
-                    .getAppenders();
-        appenders.forEach((name, appender) -> System.out.println(name));
+        Configuration config = loggerContext.getConfiguration();
+        Appender      stdout = config.getAppender("STDOUT");
+        Filter        filter = config.getFilter();
+        LoggerConfig rootLoggerConfig
+                = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        rootLoggerConfig.removeAppender("STDOUT");
+        rootLoggerConfig.addAppender(stdout, Level.ERROR, filter);
+        loggerContext.updateLoggers();
     }
 
 

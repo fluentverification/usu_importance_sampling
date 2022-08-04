@@ -22,7 +22,7 @@ public abstract class Command {
     @Option(name="-vvv",usage="enable verbose logging (TRACE level)")
     protected boolean verboseLogging3 = false;
 
-    @Option(name="--quiet",usage="disable all logging to console")
+    @Option(name="--quiet",usage="disable logging to console, except for errors")
     protected boolean quietLogging = false;
 
 
@@ -49,6 +49,9 @@ public abstract class Command {
      * Parses the logging arguments that are available from any level of the command structure
      */
     public final void readLoggingArgs() {
+        if (quietLogging) {
+            Main.disableConsoleLogging();
+        }
         if (verboseLogging3) {
             Main.setLogLevel(Level.TRACE);
             Main.logger.info("Log level set to TRACE");
@@ -58,9 +61,6 @@ public abstract class Command {
         } else if (verboseLogging1) {
             Main.setLogLevel(Level.INFO);
             Main.logger.info("Log level set to INFO");
-        }
-        if (quietLogging) {
-            Main.disableConsoleLogging();
         }
     }
     

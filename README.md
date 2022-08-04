@@ -53,8 +53,8 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `--raw` | Print raw output values, no labels |
 | `--model` | Prism model file name |
 
-### Sparse Model Generator
-| Usage: | `./bin/run.sh generate [OPTION]...` |
+### Model Generator (MGen)
+| Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
 |-|-|
 | `-I` | Number of models to generate, iterations. (default: 1) |
 | `-N` | Number of states to generate (default: 10) |
