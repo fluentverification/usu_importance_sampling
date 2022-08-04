@@ -1,6 +1,7 @@
 package imsam;
 
 import org.apache.logging.log4j.Level;
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 /**
@@ -25,6 +26,9 @@ public abstract class Command {
     @Option(name="--quiet",usage="disable logging to console, except for errors")
     protected boolean quietLogging = false;
 
+    @Option(name="--help",aliases={"-h"},help=true,usage="Show usage information")
+    protected boolean showHelp = false;
+
 
     /**
      * This abstract method is where control is passed to subcommands.
@@ -41,14 +45,18 @@ public abstract class Command {
      * @throws Exception can throw uncaught exceptions if it makes sense to do so
      */
     public final int entryPoint() throws Exception {
-        readLoggingArgs();      // read any logging args provided after the command arg
+        readCommonArgs();      // read any common args provided to this command
         return exec();
     }
 
     /**
      * Parses the logging arguments that are available from any level of the command structure
      */
-    public final void readLoggingArgs() {
+    public final void readCommonArgs() {
+        if (showHelp) {
+            (new CmdLineParser(this)).printUsage(System.out);
+            System.exit(0);
+        }
         if (quietLogging) {
             Main.disableConsoleLogging();
         }
