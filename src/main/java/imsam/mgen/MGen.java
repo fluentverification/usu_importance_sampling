@@ -21,6 +21,8 @@ public abstract class MGen extends Command {
 
     final static Logger logger = imsam.Main.getLogger(MGen.class);
 
+    public abstract String MGEN_ID();
+
     protected abstract void generateModel();
 
     //////////////////////////////////////////////////
@@ -125,9 +127,9 @@ public abstract class MGen extends Command {
         }
         if (outputFilename.isBlank()) {
             if (1 == iterations) {
-                outputFilename = "sparse-model.pm";
+                outputFilename = "%mgenID%-model.pm";
             } else {
-                outputFilename = "sparse-model-%i%.pm";
+                outputFilename = "%mgenID%-model-%i%.pm";
             }
         }
         if (null == transitionCountDistribution) {
@@ -218,7 +220,8 @@ public abstract class MGen extends Command {
     protected String resolvePlaceholders(String str, int iteration) {
         return str.replaceAll("%i%",Integer.toString(iteration))
                 .replaceAll("%numberOfStates%",Integer.toString(numberOfStates))
-                .replaceAll("%targetState%",Integer.toString(targetState));
+                .replaceAll("%targetState%",Integer.toString(targetState))
+                .replaceAll("%mgenID%",MGEN_ID());
     }
 
     protected class State {
