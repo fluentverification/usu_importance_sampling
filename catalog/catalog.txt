@@ -1,3 +1,0 @@
-Guide to catalog directory:
-d: Represents a directory tied to a certain degree distribution
-n: Represents a directory tied to a model with that many states
