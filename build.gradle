@@ -48,6 +48,7 @@ dependencies {
 jar {
     manifest {
         attributes "Main-Class": "imsam.scaffoldImportanceSampling"
+        attributes "Multi-Release": true
     }
     from {
         // This bundles all the dependencies from libBundle into the jar
