@@ -7,7 +7,7 @@ importance splitting, and related techniques.
 
 <br>
 
-# Build Instructions and Usage
+# Build Instructions
 
 Tested on Ubuntu 20 *WSL* and Centos 7
 
@@ -24,7 +24,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
-## Build instructions:
+## Build:
 
 1. Run `./gradlew build`
 
@@ -41,11 +41,11 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
- ## Usage:
+# Usage:
 
  ### Common Arguments
 
- |   |   |
+ | Usage: | `./bin/run.sh <command> [OPTION]...` |
  |---|---|
  | `-v` | Verbose logging (Info level) |
  | `-vv` | Verbose logging (Debug level) |
