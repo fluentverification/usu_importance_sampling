@@ -138,7 +138,7 @@ public class MultiTargetModelGenerator extends MGen{
             }
         }
         if(notOnPath.size() != 0){
-            logger.debug("Adding all states to target path");
+            logger.debug("Adding all states to a target path");
             for(int stateId : notOnPath){
                 int successor = onPath.get(((int)(Math.random()*onPath.size())));
                 TransitionPath transition = new TransitionPath(
