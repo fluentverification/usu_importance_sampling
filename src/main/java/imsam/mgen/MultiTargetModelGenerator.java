@@ -47,9 +47,14 @@ public class MultiTargetModelGenerator extends MGen{
             targets = new ArrayList<>();
             for(String targetString : parsedTargetList){
                 try{
-                    logger.debug("adding "+ Integer.parseInt(targetString)+ " to target ArrayList");
-                    targets.add(Integer.parseInt(targetString));
-                    
+                    int targetCandidate = Integer.parseInt(targetString);
+                    if(targetCandidate > (numberOfStates-1)){
+                        String errMsg = "Targets must be in the state space";
+                        logger.error(errMsg);
+                    }else{
+                        logger.debug("adding "+ targetCandidate+ " to target ArrayList");
+                        targets.add(targetCandidate);
+                    }
                 }catch(NumberFormatException e){
                     String errMsg = "The target state list must be made up of integers separated by a space. "+
                     "Ex)\"1 5 9 12\"";
