@@ -1,0 +1,9 @@
+{
+"transitionCountDistribution": {
+        "type": "discrete",
+        "values": {
+            "10": 5,
+            "16": 2,
+        },
+    },
+}
