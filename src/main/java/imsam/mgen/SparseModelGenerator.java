@@ -3,6 +3,10 @@ package imsam.mgen;
 
 public class SparseModelGenerator extends MGen {
 
+    @Override
+    public String MGEN_ID() {
+        return "sparse";
+    }
     
     @Override
     protected void generateModel() {

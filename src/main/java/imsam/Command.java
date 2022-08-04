@@ -51,10 +51,13 @@ public abstract class Command {
     public final void readLoggingArgs() {
         if (verboseLogging3) {
             Main.setLogLevel(Level.TRACE);
+            Main.logger.info("Log level set to TRACE");
         } else if (verboseLogging2) {
             Main.setLogLevel(Level.DEBUG);
+            Main.logger.info("Log level set to DEBUG");
         } else if (verboseLogging1) {
             Main.setLogLevel(Level.INFO);
+            Main.logger.info("Log level set to INFO");
         }
         if (quietLogging) {
             Main.disableConsoleLogging();

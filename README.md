@@ -45,7 +45,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 ### Scaffold Importance Sampling
 
-| Usage: | `/bin/run.sh simulate [OPTION]...` |
+| Usage: | `./bin/run.sh simulate [OPTION]...` |
 |-|-|
 | `-M` | Transition multiplier (default: 2) |
 | `-Tmax` | Maximum transitions before truncating (default: 1,000) |
@@ -81,7 +81,7 @@ do this.
   3. Open VS code and install the `Remote - WSL` extension
   4. Click the bottom-left green button and open a WSL instance
 
-### Recommended VS Code Extensions (Installed in WSL)
+### Recommended VS Code Extensions (Installed in WSL instance)
 - Extension Pack for Java
 - GitLens (Optional, but recommended)
 - Code Spell Checker (Optional, but recommended)
