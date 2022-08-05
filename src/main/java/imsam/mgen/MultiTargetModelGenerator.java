@@ -11,8 +11,7 @@ import org.kohsuke.args4j.Option;
  * This is a model generator that will accept a list of target states and force all paths to converge on one of said states
  * 
  * //TODO//
- * Check if target list is in state space
- * Fix GenerateSeedPath
+ * Redo random transition generation to create low level connectivity
  * 
  * @author Eric Reiss
  */
