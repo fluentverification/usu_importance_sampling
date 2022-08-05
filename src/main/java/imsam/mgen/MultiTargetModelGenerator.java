@@ -19,8 +19,18 @@ import org.kohsuke.args4j.Option;
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     
+    //////////////////////////////////////////////////
+    // CLI Arguments
     @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
     public String targetList = "";
+    // end CLI Arguments
+    //////////////////////////////////////////////////
+
+    //Set default file name
+    @Override
+    public String MGEN_ID(){
+        return "multi-target";
+    }
 
     //Parse config file options
     @Override 
@@ -97,6 +107,7 @@ public class MultiTargetModelGenerator extends MGen{
                         predecessor, 
                         current, 
                         transitionRateDistribution.random());
+                    logger.trace("Connecting state "+predecessor+" to state "+current);
                     stateSpace[current].transitionsIn.add(transition);
                     stateSpace[predecessor].transitionsOut.add(transition);
                 }
@@ -108,17 +119,24 @@ public class MultiTargetModelGenerator extends MGen{
 
         //Add other transitions to connect to target path
         for(int stateId = 0; stateId<numberOfStates; stateId++){
-            int transitionCount = (int)transitionCountDistribution.random();
+            int transitionCount = (int)transitionCountDistribution.random(); //Get random transition count
             logger.trace("Generating " + transitionCount + " transitions for state " + stateId);
+
+            //For each transition, connect to a random state 
             for(int transitionId = 0; transitionId<transitionCount; transitionId++){
                 int successor = (int)(Math.random()*numberOfStates);
-                if(stateId != successor && !targets.contains(stateId)){
+                //Check successor is not current state or target state
+                if(stateId != successor && !targets.contains(stateId) ){
                     logger.trace("Connecting states "+ stateId + " and "+ successor);
                     TransitionPath transition = new TransitionPath(stateId, successor, transitionRateDistribution.random());
-                    stateSpace[stateId].transitionsOut.add(transition);
-                    stateSpace[successor].transitionsIn.add(transition);
-                    if(onTargetPath[successor]){
-                        onTargetPath[stateId] = true;
+                    //Check if transition already exists
+                    if(!stateSpace[stateId].transitionsOut.contains(transition)){
+                        stateSpace[stateId].transitionsOut.add(transition);
+                        stateSpace[successor].transitionsIn.add(transition);
+                        //Annotate if on target path
+                        if(onTargetPath[successor]){
+                            onTargetPath[stateId] = true;
+                        }
                     }
                 }
             }
@@ -138,6 +156,7 @@ public class MultiTargetModelGenerator extends MGen{
                 notOnPath.add(stateId);
             }
         }
+        //Add all states to a target path
         if(notOnPath.size() != 0){
             logger.debug("Adding all states to a target path");
             for(int stateId : notOnPath){
