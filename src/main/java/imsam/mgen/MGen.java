@@ -177,7 +177,7 @@ public abstract class MGen extends Command {
         for (int i=0; i<iterations; i++) {
             logger.info("Generating model " + (i+1) + "/" + iterations);
             generateModel();
-            generateSeedPath();
+           // generateSeedPath();
             savePrismFile(i);
         }
         return 0;
@@ -203,7 +203,7 @@ public abstract class MGen extends Command {
         logger.debug("Output filename after resolving placeholders: '" + filename + "'");
         FileWriter writer = new FileWriter(filename);
         writer.write("ctmc\n\n");
-        writer.write("// SeedPath: " + seedPath + "\n\n");
+      //  writer.write("// SeedPath: " + seedPath + "\n\n");
         writer.write("module M1\n");
         writer.write("    x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
@@ -241,6 +241,24 @@ public abstract class MGen extends Command {
             this.stateId = stateId;
             transitionsOut = new ArrayList<>();
             transitionsIn = new ArrayList<>();
+        }
+        boolean transitionInExists(TransitionPath transition){
+            for(TransitionPath check : transitionsIn){
+                if(check.start == transition.start && check.end == transition.end){
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        boolean transitionOutExists(TransitionPath transition){
+            for(TransitionPath check : transitionsOut){
+                if(check.start == transition.start && check.end == transition.end){
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
