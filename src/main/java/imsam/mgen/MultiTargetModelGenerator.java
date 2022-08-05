@@ -18,7 +18,7 @@ import org.kohsuke.args4j.Option;
  */
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
-    
+    public static final String MGEN_ID = "multi-target";
     //////////////////////////////////////////////////
     // CLI Arguments
     @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
@@ -26,10 +26,11 @@ public class MultiTargetModelGenerator extends MGen{
     // end CLI Arguments
     //////////////////////////////////////////////////
 
+
     //Set default file name
     @Override
     public String MGEN_ID(){
-        return "multi-target";
+        return MGEN_ID;
     }
 
     //Parse config file options
