@@ -65,6 +65,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 ### Model Generator (MGen)
 | Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
 |-|-|
+| `mgenID` | The model generator to use (currently only `sparse`) |
 | `-I` | Number of models to generate, iterations. (default: 1) |
 | `-N` | Number of states to generate (default: 10) |
 | `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
