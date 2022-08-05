@@ -7,7 +7,7 @@ importance splitting, and related techniques.
 
 <br>
 
-# Build Instructions and Usage
+# Build Instructions
 
 Tested on Ubuntu 20 *WSL* and Centos 7
 
@@ -24,7 +24,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
-## Build instructions:
+## Build:
 
 1. Run `./gradlew build`
 
@@ -41,7 +41,16 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
- ## Usage:
+# Usage:
+
+ ### Common Arguments
+
+ | Usage: | `./bin/run.sh <command> [OPTION]...` |
+ |---|---|
+ | `-v` | Verbose logging (Info level) |
+ | `-vv` | Verbose logging (Debug level) |
+ | `-vvv` | Verbose logging (Trace level) |
+ | `--quiet` | Suppress logging to console, except for errors |
 
 ### Scaffold Importance Sampling
 
@@ -53,9 +62,10 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `--raw` | Print raw output values, no labels |
 | `--model` | Prism model file name |
 
-### Sparse Model Generator
-| Usage: | `./bin/run.sh generate [OPTION]...` |
+### Model Generator (MGen)
+| Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
 |-|-|
+| `mgenID` | The model generator to use (currently only `sparse`) |
 | `-I` | Number of models to generate, iterations. (default: 1) |
 | `-N` | Number of states to generate (default: 10) |
 | `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
