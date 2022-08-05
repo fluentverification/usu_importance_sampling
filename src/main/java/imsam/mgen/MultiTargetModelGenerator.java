@@ -94,81 +94,76 @@ public class MultiTargetModelGenerator extends MGen{
 
         //Create path from initial to target
         logger.debug("Generating target path(s)");
-        boolean[] onTargetPath = new boolean[numberOfStates];
-        for(int targetIndex=0; targetIndex<targets.size(); targetIndex++){
-            logger.trace("generating target path for "+ targets.get(targetIndex));
-            int target = targets.get(targetIndex);
-            onTargetPath[target] = true;
-            int current = target;
+        TargetPath targetPathTracker[] = new TargetPath[targets.size()];
+        boolean targetPathCheck[] = new boolean[numberOfStates];
+        for(int targetIdx = 0; targetIdx < targets.size(); targetIdx++){
+            int currentTarget = targets.get(targetIdx);
+            logger.trace("Starting path for "+ currentTarget);
+            targetPathTracker[targetIdx] = new TargetPath(currentTarget);
+            logger.trace("Setting targetPathCheck["+currentTarget+"] to true");
+            targetPathCheck[currentTarget] = true;
+            int current = currentTarget;
             int initial = 0;
-            int predecessor = (int)(Math.random()*numberOfStates);
             while(current != initial){
-                if(predecessor != target && !targets.contains(predecessor)){
-                    TransitionPath transition = new TransitionPath(
-                        predecessor, 
-                        current, 
-                        transitionRateDistribution.random());
+                int predecessor = (int)(Math.random()*numberOfStates);
+                while(targets.contains(predecessor) || current == predecessor || targetPathTracker[targetIdx].onPath(predecessor)){
+                    logger.trace(predecessor + " is an invalid predecessor. Redrawing");
+                    predecessor = (int)(Math.random()*numberOfStates);
+                }
+                TransitionPath transition = new TransitionPath(
+                    predecessor, 
+                    current, 
+                    transitionRateDistribution.random());
+                if(!stateSpace[current].transitionInExists(transition)){
                     logger.trace("Connecting state "+predecessor+" to state "+current);
                     stateSpace[current].transitionsIn.add(transition);
                     stateSpace[predecessor].transitionsOut.add(transition);
+                    logger.trace("Adding state "+predecessor+" to TargetPath "+targetPathTracker[targetIdx].targetState);
+                    targetPathTracker[targetIdx].addState(predecessor);
+                    logger.trace("Setting targetPathCheck["+predecessor+"] to true");
+                    targetPathCheck[predecessor] = true;
+                    
+                }else{
+                    
+                    logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
-                onTargetPath[predecessor] = true;
                 current = predecessor;
-                predecessor = (int)(Math.random()*numberOfStates);
             }
+            logger.debug("Target Path: "+targetPathTracker[targetIdx]); //Print target path
         }
-
-        //Add other transitions to connect to target path
-        for(int stateId = 0; stateId<numberOfStates; stateId++){
-            int transitionCount = (int)transitionCountDistribution.random(); //Get random transition count
-            logger.trace("Generating " + transitionCount + " transitions for state " + stateId);
-
-            //For each transition, connect to a random state 
-            for(int transitionId = 0; transitionId<transitionCount; transitionId++){
-                int successor = (int)(Math.random()*numberOfStates);
-                //Check successor is not current state or target state
-                if(stateId != successor && !targets.contains(stateId) ){
-                    logger.trace("Connecting states "+ stateId + " and "+ successor);
-                    TransitionPath transition = new TransitionPath(stateId, successor, transitionRateDistribution.random());
-                    //Check if transition already exists
-                    if(!stateSpace[stateId].transitionsOut.contains(transition)){
-                        stateSpace[stateId].transitionsOut.add(transition);
-                        stateSpace[successor].transitionsIn.add(transition);
-                        //Annotate if on target path
-                        if(onTargetPath[successor]){
-                            onTargetPath[stateId] = true;
-                        }
-                    }
-                }
-            }
-        }
-
-
+        
         //Ensure all states are on target path
         logger.debug("Ensuring all states are on target path");
-        List<Integer> onPath = new ArrayList<>();
         List<Integer> notOnPath = new ArrayList<>();
-        for(int stateId=0; stateId<numberOfStates; stateId++){
-            if(onTargetPath[stateId]){
-                logger.trace(stateId+" is on a path");
-                onPath.add(stateId);
-            }else{
-                logger.trace(stateId + " is not on a path");
+        for(int stateId = 0; stateId < numberOfStates; stateId++){
+            
+            if(!targetPathCheck[stateId]){
                 notOnPath.add(stateId);
+                logger.trace(stateId+ " is not on a path");
             }
         }
         //Add all states to a target path
         if(notOnPath.size() != 0){
             logger.debug("Adding all states to a target path");
             for(int stateId : notOnPath){
-                int successor = onPath.get(((int)(Math.random()*onPath.size())));
-                TransitionPath transition = new TransitionPath(
+                int predecessor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
+                int successor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
+
+                TransitionPath successorTransition = new TransitionPath(
                     stateId, 
                     successor, 
                     transitionRateDistribution.random());
-                logger.debug("Connecting state" +stateId+ " to state "+ successor);
-                stateSpace[stateId].transitionsOut.add(transition);
-                stateSpace[stateId].transitionsIn.add(transition);
+                logger.trace("Connecting state" +stateId+ " to state "+ successor);
+                stateSpace[stateId].transitionsOut.add(successorTransition);
+                stateSpace[successor].transitionsIn.add(successorTransition);
+
+                TransitionPath predTransition = new TransitionPath(
+                    predecessor,
+                    successor,
+                    transitionRateDistribution.random());
+                logger.trace("Connecting state" +predecessor+ " to state "+ stateId);
+                stateSpace[predecessor].transitionsOut.add(predTransition);
+                stateSpace[stateId].transitionsIn.add(predTransition);
             }
         }
     }
@@ -177,7 +172,7 @@ public class MultiTargetModelGenerator extends MGen{
      * @return List of target states
      */
     private List<Integer> generateTargetStates(){
-        StringBuilder strbld = new StringBuilder();
+        StringBuilder strBld = new StringBuilder();
         List<Integer> targets = new ArrayList<>();
         double third = 0.3333333333333333f;
         int targetBound = (int)(third*numberOfStates); //get bound targets to 1/3 of state space
@@ -187,11 +182,42 @@ public class MultiTargetModelGenerator extends MGen{
         logger.debug(numberOfTargets+(numberOfTargets==1?" state has ":" states have ")+"been selected as target(s)");
         for(int targetIndex = 0; targetIndex < numberOfTargets; targetIndex++){
             int pickTarget = (int)((Math.random()*(numberOfStates-1))+1); //draw targets
+            while(targets.contains(pickTarget)){ //redraw for unique targets 
+                pickTarget = (int)((Math.random()*(numberOfStates-1))+1);
+            }
             targets.add(pickTarget);
-            logger.debug("Picking state "+pickTarget+" as a target state");
-            strbld.append(pickTarget+" ");
+            strBld.append(pickTarget+" ");
         }
-        logger.info("Generated Target States: "+ strbld.toString());
+        logger.info("Generated Target States: "+ strBld.toString());
         return targets;
+    }
+
+    private class TargetPath{
+        private int targetState;
+        private List<Integer> path;
+
+        public TargetPath(int target){
+            this.targetState = target;
+            path = new ArrayList<>();
+            path.add(target);
+        }
+
+        public void addState(int stateId){
+            path.add(stateId);
+        }
+        @Override
+        public String toString(){
+            StringBuilder strBld = new StringBuilder();
+            for(int i = path.size()-1; i >= 0; i--){
+                strBld.append(path.get(i)+ " ");
+            }
+            return strBld.toString();
+        }
+        public boolean onPath(int stateId){
+            return path.contains(stateId);
+        }
+        public int getRandom(){
+            return path.get((int)(Math.random()*path.size()));
+        }
     }
 }
