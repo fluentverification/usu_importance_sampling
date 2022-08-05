@@ -11,6 +11,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
@@ -30,14 +31,16 @@ public class Main extends Command {
      * usually use `Main.getLogger()` and have their own.
      */
     public static final Logger logger = loggerContext.getRootLogger();
+
+    public static final Main main = new Main();       // This looks weird, but an instance of the class is required by args4j
+
+    public static final CmdLineParser parser = new CmdLineParser(main);
     
 
-    @Argument(required=true,index=0,metaVar="command",usage="subcommands, e.g., {generate|simulate}",handler=SubCommandHandler.class)
+    @Argument(required=true,index=0,metaVar="command",usage="subcommand (use --help option with subcommand for more information)",handler=SubCommandHandler.class)
     @SubCommands({
-        @SubCommand(name="generate",impl=MGenCommand.class),
         @SubCommand(name="mgen",impl=MGenCommand.class),
         @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
-        @SubCommand(name="sim",impl=ScaffoldImportanceSampling.class),
     })
     protected Command command;
 
@@ -49,16 +52,18 @@ public class Main extends Command {
      * @param args see README.md for details
      */
     public static void main(String[] args) {
-        Main main = new Main();     // This looks weird, but an instance of the class is required by args4j
-        CmdLineParser parser = new CmdLineParser(main);
         try {
             parser.parseArgument(args);
             System.exit( main.entryPoint() );
         } catch (CmdLineException ex) {
+            System.err.println();
             System.err.println(ex.getMessage());
-            return;
+            System.err.println();
+            printUsage(ex);
+            System.exit(1);
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
+            System.exit(1);
         }
     }
 
@@ -69,6 +74,35 @@ public class Main extends Command {
     protected int exec() throws Exception {
         command.entryPoint();
         return 0;
+    }
+
+    public static void printUsage(Command cmd) {
+        _printUsage(
+                new CmdLineParser(cmd),
+                !cmd.getClass().isInstance(main)
+        );
+    }
+
+    public static void printUsage(CmdLineException ex) {
+        _printUsage(
+                ex.getParser(),
+                ex.getParser() != Main.parser
+        );
+    }
+
+    private static void _printUsage(CmdLineParser parser, boolean includeSubcommand) {
+        System.err.println("Usage:");
+        System.err.print(" ./bin/run.sh");
+        for (OptionHandler arg : Main.parser.getArguments()) {
+            System.err.print(" " + arg.getDefaultMetaVariable());
+        }
+        if (includeSubcommand) {
+            for (OptionHandler arg : parser.getArguments()) {
+                System.err.print(" " + arg.getDefaultMetaVariable());
+            }
+        }
+        System.err.println(" [OPTIONS]...\n");
+        parser.printUsage(System.err);
     }
 
 

@@ -3,6 +3,7 @@ package imsam;
 import org.apache.logging.log4j.Level;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.OptionHandlerFilter;
 
 /**
  * Implementations of this abstract class are used to create the command
@@ -54,7 +55,7 @@ public abstract class Command {
      */
     public final void readCommonArgs() {
         if (showHelp) {
-            (new CmdLineParser(this)).printUsage(System.out);
+            Main.printUsage(this);
             System.exit(0);
         }
         if (quietLogging) {
