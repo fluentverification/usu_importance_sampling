@@ -37,10 +37,10 @@ public abstract class MGen extends Command {
     @Option(name="--target-state",usage="index of the target state (zero indexed). default: 1")
     public int targetState = -1;
 
-    @Option(name="--output",usage="name of the output Prism file. default: sparse-model.pm")
+    @Option(name="--output",metaVar="FILENAME",usage="name of the output Prism file. default: sparse-model.pm")
     public String outputFilename = "";
 
-    @Option(name="--config",usage="model generator config json file. See README for examples.")
+    @Option(name="--config",metaVar="FILENAME",usage="model generator config json file. See README for examples.")
     public String configFilename = "";
 
     // end CLI Arguments
