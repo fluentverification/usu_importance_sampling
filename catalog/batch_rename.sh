@@ -4,3 +4,6 @@
 find . -iname "*pm" -exec rename -v 's/\.pm$/.prism/' '{}' \;
 # .sm is also used by Smalltalk
 find . -iname "*sm" -exec rename -v 's/\.sm$/.prism/' '{}' \;
+
+# Finally, add all to git
+find . -iname "*.prism" -exec git add '{}' \;
