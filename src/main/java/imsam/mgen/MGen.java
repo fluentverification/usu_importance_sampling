@@ -248,7 +248,6 @@ public abstract class MGen extends Command {
                     return true;
                 }
             }
-            
             return false;
         }
 

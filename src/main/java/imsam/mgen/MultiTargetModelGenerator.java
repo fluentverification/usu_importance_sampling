@@ -9,7 +9,7 @@ import org.kohsuke.args4j.Option;
 
 /**
  * This is a model generator that will accept a list of target states and force all paths to converge on one of said states
- * 
+ * It extends the MGen abstract class
  * //TODO//
  * Redo random transition generation to create low level connectivity
  * 
@@ -55,8 +55,10 @@ public class MultiTargetModelGenerator extends MGen{
             logger.debug("target list is "+ targetList);
             String[] parsedTargetList = targetList.split(" ");
             targets = new ArrayList<>();
+            logger.debug("Parsing target list");
             for(String targetString : parsedTargetList){
                 try{
+                    logger.trace("Parsing: "+targetString);
                     int targetCandidate = Integer.parseInt(targetString);
                     if(targetCandidate>numberOfStates-1 || targetCandidate==0){
                         String errMsg = "Targets must be in the state space and cannot be the initial state";
@@ -91,7 +93,7 @@ public class MultiTargetModelGenerator extends MGen{
             stateSpace[stateId] = new State(stateId);
         }
 
-        //Create path from initial to target
+        //Create paths from initial state to target states
         logger.debug("Generating target path(s)");
         TargetPath targetPathTracker[] = new TargetPath[targets.size()];
         boolean targetPathCheck[] = new boolean[numberOfStates];
@@ -121,9 +123,7 @@ public class MultiTargetModelGenerator extends MGen{
                     targetPathTracker[targetIdx].addState(predecessor);
                     logger.trace("Setting targetPathCheck["+predecessor+"] to true");
                     targetPathCheck[predecessor] = true;
-                    
                 }else{
-                    
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
                 current = predecessor;
@@ -131,41 +131,59 @@ public class MultiTargetModelGenerator extends MGen{
             logger.debug("Target Path: "+targetPathTracker[targetIdx]); //Print target path
         }
         
-        //Ensure all states are on target path
+        //Ensure all states are on a target path
         logger.debug("Ensuring all states are on target path");
         List<Integer> notOnPath = new ArrayList<>();
         for(int stateId = 0; stateId < numberOfStates; stateId++){
-            
             if(!targetPathCheck[stateId]){
                 notOnPath.add(stateId);
                 logger.trace(stateId+ " is not on a path");
             }
         }
+
         //Add all states to a target path
-        if(notOnPath.size() != 0){
+        if(notOnPath.size() > 0){
             logger.debug("Adding all states to a target path");
             for(int stateId : notOnPath){
                 int predecessor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
+                while(targets.contains(predecessor)){
+                    logger.trace(predecessor + " is not a valid predecessor. Redrawing");
+                    predecessor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
+                }
                 int successor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
-
+                //Create successor transition and add if it does not already exist
                 TransitionPath successorTransition = new TransitionPath(
                     stateId, 
                     successor, 
                     transitionRateDistribution.random());
-                logger.trace("Connecting state" +stateId+ " to state "+ successor);
-                stateSpace[stateId].transitionsOut.add(successorTransition);
-                stateSpace[successor].transitionsIn.add(successorTransition);
-
+                if(!stateSpace[stateId].transitionOutExists(successorTransition)){
+                    logger.trace("Connecting state " +stateId+ " to state "+ successor);
+                    stateSpace[stateId].transitionsOut.add(successorTransition);
+                    stateSpace[successor].transitionsIn.add(successorTransition);
+                }else{
+                    logger.trace(stateId+" already connects to "+ successor);
+                }
+                //Create predecessor transition and add if it does not already exist
                 TransitionPath predTransition = new TransitionPath(
                     predecessor,
-                    successor,
+                    stateId,
                     transitionRateDistribution.random());
-                logger.trace("Connecting state" +predecessor+ " to state "+ stateId);
-                stateSpace[predecessor].transitionsOut.add(predTransition);
-                stateSpace[stateId].transitionsIn.add(predTransition);
+                if(!stateSpace[stateId].transitionInExists(predTransition)){
+                    logger.trace("Connecting state " +predecessor+ " to state "+ stateId);
+                    stateSpace[predecessor].transitionsOut.add(predTransition);
+                    stateSpace[stateId].transitionsIn.add(predTransition);
+                }else{
+                    logger.trace(predecessor+" already connects to "+stateId);
+                }
             }
+        }else{
+            logger.debug("All states are on a target path");
         }
+
+        //Randomly generate additional transitions
+        
     }
+
     /**
      * Randomly choose target states from state space, arbitrarily bounded at 1/3 of state space
      * @return List of target states
@@ -180,8 +198,10 @@ public class MultiTargetModelGenerator extends MGen{
         logger.info("Target Size: "+numberOfTargets);
         logger.debug(numberOfTargets+(numberOfTargets==1?" state has ":" states have ")+"been selected as target(s)");
         for(int targetIndex = 0; targetIndex < numberOfTargets; targetIndex++){
-            int pickTarget = (int)((Math.random()*(numberOfStates-1))+1); //draw targets
-            while(targets.contains(pickTarget)){ //redraw for unique targets 
+            //draw targets
+            int pickTarget = (int)((Math.random()*(numberOfStates-1))+1); 
+            //redraw for unique targets
+            while(targets.contains(pickTarget)){  
                 pickTarget = (int)((Math.random()*(numberOfStates-1))+1);
             }
             targets.add(pickTarget);
@@ -191,6 +211,9 @@ public class MultiTargetModelGenerator extends MGen{
         return targets;
     }
 
+    /**
+     * This is a class to manage target paths. 
+     */
     private class TargetPath{
         private int targetState;
         private List<Integer> path;
