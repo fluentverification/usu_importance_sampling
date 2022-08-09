@@ -10,4 +10,6 @@ cli-args/
 .gradle/
 build/
 bin/main/
+drawGraph.py
+multi-target.png
 

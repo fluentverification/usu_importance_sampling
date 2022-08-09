@@ -1,5 +1,8 @@
 package imsam.mgen;
 
+import java.io.FileWriter;
+import java.io.IOError;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +17,8 @@ import org.kohsuke.args4j.Option;
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     public static final String MGEN_ID = "multi-target";
+    //Matrix to use with matlab 
+    public int[][] adjacencyMatrix;
     //////////////////////////////////////////////////
     // CLI Arguments
     @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
@@ -83,6 +88,7 @@ public class MultiTargetModelGenerator extends MGen{
      */
     @Override
     protected void generateModel(){
+        adjacencyMatrix = new int[numberOfStates][numberOfStates];
         long start = System.nanoTime();
         //initializing state space
         stateSpace = new State[numberOfStates];
@@ -109,10 +115,11 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace(predecessor + " is an invalid predecessor. Redrawing");
                     predecessor = (int)(Math.random()*numberOfStates);
                 }
+                int rate = (int)transitionRateDistribution.random(); 
                 TransitionPath transition = new TransitionPath(
                     predecessor, 
                     current, 
-                    transitionRateDistribution.random());
+                    rate);
                 if(!stateSpace[current].transitionInExists(transition)){
                     logger.trace("Connecting state "+predecessor+" to state "+current);
                     stateSpace[current].transitionsIn.add(transition);
@@ -121,6 +128,8 @@ public class MultiTargetModelGenerator extends MGen{
                     targetPathTracker[targetIdx].addState(predecessor);
                     logger.trace("Setting targetPathCheck["+predecessor+"] to true");
                     targetPathCheck[predecessor] = true;
+                    //Add to adjacency matrix
+                    adjacencyMatrix[predecessor][current] = rate;
                 }else{
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
@@ -150,26 +159,32 @@ public class MultiTargetModelGenerator extends MGen{
                 }
                 int successor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
                 //Create successor transition and add if it does not already exist
+                int rate = (int)transitionRateDistribution.random();
                 TransitionPath successorTransition = new TransitionPath(
                     stateId, 
                     successor, 
-                    transitionRateDistribution.random());
+                    rate);
                 if(!stateSpace[stateId].transitionOutExists(successorTransition)){
                     logger.trace("Connecting state " +stateId+ " to state "+ successor);
                     stateSpace[stateId].transitionsOut.add(successorTransition);
                     stateSpace[successor].transitionsIn.add(successorTransition);
+                    //add to adjacency matrix
+                    adjacencyMatrix[stateId][successor] = rate;
                 }else{
                     logger.trace(stateId+" already connects to "+ successor);
                 }
                 //Create predecessor transition and add if it does not already exist
+                rate = (int)transitionRateDistribution.random(); 
                 TransitionPath predTransition = new TransitionPath(
                     predecessor,
                     stateId,
-                    transitionRateDistribution.random());
+                    rate);
                 if(!stateSpace[stateId].transitionInExists(predTransition)){
                     logger.trace("Connecting state " +predecessor+ " to state "+ stateId);
                     stateSpace[predecessor].transitionsOut.add(predTransition);
                     stateSpace[stateId].transitionsIn.add(predTransition);
+                    //add to adjacency matrix 
+                    adjacencyMatrix[predecessor][stateId] = rate;
                 }else{
                     logger.trace(predecessor+" already connects to "+stateId);
                 }
@@ -183,17 +198,20 @@ public class MultiTargetModelGenerator extends MGen{
         for(State state : stateSpace){
             int numberOfTransitions =(int)transitionCountDistribution.random();
             logger.trace("Generating "+ numberOfTransitions+ " transitions for "+ state.stateId);
-            if(!targets.contains(state.stateId)){
+            if(!targets.contains(state.stateId) || state.stateId == 0){
                 for(int transitionId = 0; transitionId<numberOfTransitions; transitionId++){
                     int successor = (int)(Math.random()*numberOfStates);
+                    int rate = (int)transitionRateDistribution.random(); 
                     TransitionPath transition = new TransitionPath(
                         state.stateId, 
                         successor, 
-                        transitionRateDistribution.random());
+                        rate);
                     if((!state.transitionOutExists(transition)) && (successor != state.stateId)){
                         logger.trace("Connecting state " +state.stateId+ " to state "+ successor);
                         state.transitionsOut.add(transition);
                         stateSpace[successor].transitionsIn.add(transition);
+                        //add to adjacency matrix
+                        adjacencyMatrix[state.stateId][successor] = rate;
                     }else{
                         logger.trace(state.stateId+" already connects to "+successor);;
                     }
@@ -202,8 +220,14 @@ public class MultiTargetModelGenerator extends MGen{
                 logger.trace("Skipping target state "+ state.stateId);
             }
         }
+        logger.debug("Generating drawGraph.py");
+        try{
+            processMatrix();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
         long end = System.nanoTime();
-        logger.info(numberOfStates+"-state model generated in "+(end-start)/1000000000+ "s");
+        logger.info(numberOfStates+"-state model generated in "+(end-start)/1000000+ "ms");
     }
 
     /**
@@ -231,6 +255,34 @@ public class MultiTargetModelGenerator extends MGen{
         }
         logger.info("Generated Target States: "+ strBld.toString());
         return targets;
+    }
+
+    private void processMatrix() throws IOException{
+        String fileName = "drawGraph.py";
+        FileWriter writer = new FileWriter(fileName);
+        writer.write("import networkx as nx\nimport numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n");
+        writer.write("A = np.matrix([");
+        for(int i = 0; i < adjacencyMatrix.length; i++){
+            for(int j = 0; j < adjacencyMatrix[i].length; j++){
+                if(j == 0){
+                    writer.write("[");
+                }
+                writer.write(adjacencyMatrix[i][j]+",");
+                if(j == (adjacencyMatrix[i].length-1)){
+                    writer.write("]");
+                }
+            }
+            if(i == adjacencyMatrix.length-1){
+                writer.write("])\n");
+            }else{
+                writer.write(",");
+            }
+        }
+        writer.write("G = nx.from_numpy_matrix(A,create_using=nx.DiGraph)\n");
+        writer.write("f = plt.figure()\n");
+        writer.write("nx.draw(G,with_labels=1,ax=f.add_subplot(111))\n");
+        writer.write("f.savefig(\"multi-target.png\"\n");
+        writer.close();
     }
 
     /**
