@@ -281,7 +281,7 @@ public class MultiTargetModelGenerator extends MGen{
         writer.write("G = nx.from_numpy_matrix(A,create_using=nx.DiGraph)\n");
         writer.write("f = plt.figure()\n");
         writer.write("nx.draw(G,with_labels=1,ax=f.add_subplot(111))\n");
-        writer.write("f.savefig(\"multi-target.png\"\n");
+        writer.write("f.savefig(\"multi-target.png\")\n");
         writer.close();
     }
 
