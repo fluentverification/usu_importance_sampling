@@ -9,10 +9,6 @@ import org.kohsuke.args4j.Option;
 
 /**
  * This is a model generator that will accept a list of target states and force all paths to converge on one of said states
- * It extends the MGen abstract class
- * //TODO//
- * Redo random transition generation to create low level connectivity
- * 
  * @author Eric Reiss
  */
 public class MultiTargetModelGenerator extends MGen{
@@ -81,11 +77,13 @@ public class MultiTargetModelGenerator extends MGen{
    
 
     /**
-     * Generate model by creating path from target state to initial 
-     * then ensuring every path converges to target state path
+     * Generates a model by creating paths from target states to the initial state
+     * It then ensures every state connects to a target state path
+     * Finally it randomly adds transitions
      */
     @Override
     protected void generateModel(){
+        long start = System.nanoTime();
         //initializing state space
         stateSpace = new State[numberOfStates];
         logger.debug("Initializing state space");
@@ -141,7 +139,7 @@ public class MultiTargetModelGenerator extends MGen{
             }
         }
 
-        //Add all states to a target path
+        //Add all states that are not on a path to a target path
         if(notOnPath.size() > 0){
             logger.debug("Adding all states to a target path");
             for(int stateId : notOnPath){
@@ -181,7 +179,31 @@ public class MultiTargetModelGenerator extends MGen{
         }
 
         //Randomly generate additional transitions
-        
+        logger.debug("Randomly generating other transitions");
+        for(State state : stateSpace){
+            int numberOfTransitions =(int)transitionCountDistribution.random();
+            logger.trace("Generating "+ numberOfTransitions+ " transitions for "+ state.stateId);
+            if(!targets.contains(state.stateId)){
+                for(int transitionId = 0; transitionId<numberOfTransitions; transitionId++){
+                    int successor = (int)(Math.random()*numberOfStates);
+                    TransitionPath transition = new TransitionPath(
+                        state.stateId, 
+                        successor, 
+                        transitionRateDistribution.random());
+                    if((!state.transitionOutExists(transition)) && (successor != state.stateId)){
+                        logger.trace("Connecting state " +state.stateId+ " to state "+ successor);
+                        state.transitionsOut.add(transition);
+                        stateSpace[successor].transitionsIn.add(transition);
+                    }else{
+                        logger.trace(state.stateId+" already connects to "+successor);;
+                    }
+                }
+            }else{
+                logger.trace("Skipping target state "+ state.stateId);
+            }
+        }
+        long end = System.nanoTime();
+        logger.info(numberOfStates+"-state model generated in "+(end-start)/1000000000+ "s");
     }
 
     /**
