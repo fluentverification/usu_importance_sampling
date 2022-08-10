@@ -50,7 +50,7 @@ public class SparseModelGenerator extends MGen {
                 );
                 stateSpace[stateId].transitionsOut.add(transition);
                 stateSpace[successor].transitionsIn.add(transition);
-            } 
+            }
             seedTracker[successor] = true;
             temp = successor;
         }

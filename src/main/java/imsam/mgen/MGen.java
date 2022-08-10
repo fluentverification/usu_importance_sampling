@@ -190,7 +190,7 @@ public abstract class MGen extends Command {
             strBldr.append(tracker + ",");
             if(stateSpace[tracker].transitionsOut.size() != 0){
                 tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
-            }else{
+            } else {
                 break;
             }
         }
@@ -210,11 +210,11 @@ public abstract class MGen extends Command {
             writer.write("    [] x=" + i + " -> ");
             if(stateSpace[i].transitionsOut.size() == 0){
                 writer.write(" true;\n");
-            }else{
-                for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
-                    TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
+            } else {
+                for (int j=0; j<stateSpace[i].transitionsOut.size(); j++) {
+                    TransitionPath transition = stateSpace[i].transitionsOut.get(j);
                     writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
-                    if (i2+1 < stateSpace[i].transitionsOut.size()) {
+                    if (j+1 < stateSpace[i].transitionsOut.size()) {
                         writer.write(" + ");
                     } else {
                         writer.write(";\n");

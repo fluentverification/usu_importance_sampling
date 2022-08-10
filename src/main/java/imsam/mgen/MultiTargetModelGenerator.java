@@ -15,7 +15,7 @@ import org.kohsuke.args4j.Option;
  */
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
-    public static final String MGEN_ID = "multi-target";
+    public static final String MODEL_ID = "multi-target";
     public int[][] adjacencyMatrix; //Matrix to draw graph with 
 
     //////////////////////////////////////////////////
@@ -29,7 +29,7 @@ public class MultiTargetModelGenerator extends MGen{
     //Set default file name
     @Override
     public String MGEN_ID(){
-        return MGEN_ID;
+        return MODEL_ID;
     }
 
     //Parse config file options
@@ -40,8 +40,9 @@ public class MultiTargetModelGenerator extends MGen{
                 targetList = json.getString(key);
             }
             return true;
-        }else
+        } else {
             return false;
+        }
     }
 
     //Set default options
@@ -51,7 +52,7 @@ public class MultiTargetModelGenerator extends MGen{
         if(targetList.isBlank()){
             logger.debug("target-list is blank, generating target states");
             targets = generateTargetStates();
-        }else{
+        } else {
             logger.debug("target list is "+ targetList);
             String[] parsedTargetList = targetList.split(" ");
             targets = new ArrayList<>();
@@ -64,7 +65,7 @@ public class MultiTargetModelGenerator extends MGen{
                         String errMsg = "Targets must be in the state space and cannot be the initial state";
                         logger.error(errMsg);
                         System.exit(1);
-                    }else{
+                    } else {
                         logger.debug("adding "+ targetCandidate+ " to target ArrayList");
                         targets.add(targetCandidate);
                     }
@@ -135,7 +136,7 @@ public class MultiTargetModelGenerator extends MGen{
                     targetPathCheck[predecessor] = true;
                     //Add to adjacency matrix
                     adjacencyMatrix[predecessor][current] = rate;
-                }else{
+                } else {
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
                 current = predecessor;
@@ -179,7 +180,7 @@ public class MultiTargetModelGenerator extends MGen{
                     stateSpace[successor].transitionsIn.add(successorTransition);
                     //add to adjacency matrix
                     adjacencyMatrix[stateId][successor] = rate;
-                }else{
+                } else {
                     logger.trace(stateId+" already connects to "+ successor);
                 }
                 //Create predecessor transition and add if it does not already exist
@@ -194,11 +195,11 @@ public class MultiTargetModelGenerator extends MGen{
                     stateSpace[stateId].transitionsIn.add(predTransition);
                     //add to adjacency matrix 
                     adjacencyMatrix[predecessor][stateId] = rate;
-                }else{
+                } else {
                     logger.trace(predecessor+" already connects to "+stateId);
                 }
             }
-        }else{
+        } else {
             logger.debug("All states are on a target path");
         }
 
@@ -225,11 +226,11 @@ public class MultiTargetModelGenerator extends MGen{
                         stateSpace[successor].transitionsIn.add(transition);
                         //add to adjacency matrix
                         adjacencyMatrix[state.stateId][successor] = rate;
-                    }else{
+                    } else {
                         logger.trace(state.stateId+" already connects to "+successor);;
                     }
                 }
-            }else{
+            } else {
                 logger.trace("Skipping target state "+ state.stateId);
             }
         }
@@ -296,7 +297,7 @@ public class MultiTargetModelGenerator extends MGen{
             }
             if(i == adjacencyMatrix.length-1){
                 writer.write("])\n");
-            }else{
+            } else {
                 writer.write(",");
             }
         }
