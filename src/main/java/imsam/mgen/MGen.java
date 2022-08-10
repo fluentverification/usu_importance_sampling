@@ -127,10 +127,14 @@ public abstract class MGen extends Command {
         }
         if (outputFilename.isBlank()) {
             if (1 == iterations) {
-                outputFilename = "%mgenID%-model.pm";
+                outputFilename = "%mgenID%-model.prism";
             } else {
-                outputFilename = "%mgenID%-model-%i%.pm";
+                outputFilename = "%mgenID%-model-%i%.prism";
             }
+        } else if (outputFilename.endsWith(".pm")) {
+            outputFilename.replaceAll("\\.pm", ".prism")
+        } else if (!outputFilename.endsWith(".prism")) {
+            outputFilename = outputFilename + ".prism";
         }
         if (null == transitionCountDistribution) {
             transitionCountDistribution = new UniformIntDistribution(1,4);
