@@ -255,7 +255,7 @@ public class MultiTargetModelGenerator extends MGen{
     private List<Integer> generateTargetStates(){
         StringBuilder strBld = new StringBuilder();
         List<Integer> targets = new ArrayList<>();
-        double third = 0.3333333333333333f;
+        double third = 1/3.0f;
         int targetBound = (numberOfStates==2)?1:(int)(third*numberOfStates); //get bound targets to 1/3 of state space
         logger.info("Target Bound: "+targetBound);
         int numberOfTargets = (int)((Math.random()*(targetBound-1))+1); //Randomly choose number of targets, always ensuring at least 1
