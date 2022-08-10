@@ -1,7 +1,6 @@
 package imsam.mgen;
 
 import java.io.FileWriter;
-import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +16,8 @@ import org.kohsuke.args4j.Option;
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     public static final String MGEN_ID = "multi-target";
-    //Matrix to use with matlab 
-    public int[][] adjacencyMatrix;
+    public int[][] adjacencyMatrix; //Matrix to draw graph with 
+
     //////////////////////////////////////////////////
     // CLI Arguments
     @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
@@ -88,8 +87,9 @@ public class MultiTargetModelGenerator extends MGen{
      */
     @Override
     protected void generateModel(){
-        adjacencyMatrix = new int[numberOfStates][numberOfStates];
-        long start = System.nanoTime();
+        long start = System.nanoTime(); //to calculate runtime
+        adjacencyMatrix = new int[numberOfStates][numberOfStates]; //Only used to draw graph
+
         //initializing state space
         stateSpace = new State[numberOfStates];
         logger.debug("Initializing state space");
@@ -97,7 +97,12 @@ public class MultiTargetModelGenerator extends MGen{
             stateSpace[stateId] = new State(stateId);
         }
 
-        //Create paths from initial state to target states
+        /*
+         * This sections creates paths from the initial state to target states.
+         * The method is to start at the target states and randomly generate predecessor states.
+         * A check is done to ensure that the predecessor is not already on the path and is not a target state.
+         * Predecessors are tracked using the TargetPath class.
+        */
         logger.debug("Generating target path(s)");
         TargetPath targetPathTracker[] = new TargetPath[targets.size()];
         boolean targetPathCheck[] = new boolean[numberOfStates];
@@ -138,7 +143,12 @@ public class MultiTargetModelGenerator extends MGen{
             logger.debug("Target Path: "+targetPathTracker[targetIdx]); //Print target path
         }
         
-        //Ensure all states are on a target path
+        /* 
+         * Once all target paths have been generated a check will be run to make sure there are no disjoint states
+         * If there are then those states will have a successor and a predecessor randomly drawn from a randomly 
+         * selected target path. Predecessors will not be allowed to target states, and checks will be done to ensure that 
+         * a transition does not already exist.
+        */
         logger.debug("Ensuring all states are on target path");
         List<Integer> notOnPath = new ArrayList<>();
         for(int stateId = 0; stateId < numberOfStates; stateId++){
@@ -147,7 +157,6 @@ public class MultiTargetModelGenerator extends MGen{
                 logger.trace(stateId+ " is not on a path");
             }
         }
-
         //Add all states that are not on a path to a target path
         if(notOnPath.size() > 0){
             logger.debug("Adding all states to a target path");
@@ -193,7 +202,11 @@ public class MultiTargetModelGenerator extends MGen{
             logger.debug("All states are on a target path");
         }
 
-        //Randomly generate additional transitions
+        /*
+         * Once every state is on a target path, transitions are randomly generated to connect the model for every state except
+         * the initial state and target states. The successor state is not allowed to be the current state, and if the 
+         * transition already exists with a different rate then that transition is skipped.
+         */
         logger.debug("Randomly generating other transitions");
         for(State state : stateSpace){
             int numberOfTransitions =(int)transitionCountDistribution.random();
@@ -220,6 +233,10 @@ public class MultiTargetModelGenerator extends MGen{
                 logger.trace("Skipping target state "+ state.stateId);
             }
         }
+        /*
+         * Finally to help visualize the generated model, a python script is generated that will draw the graph.
+         * It utilizes the networkx, matplotlib, and graphviz libraries. Total runtime is also calculated.
+         */
         logger.debug("Generating drawGraph.py");
         try{
             processMatrix();
@@ -257,6 +274,10 @@ public class MultiTargetModelGenerator extends MGen{
         return targets;
     }
 
+    /**
+     * This method generates a python script to draw the generated model.
+     * It utilizes the matplotlib, networkx, and graphviz libraries.
+     */
     private void processMatrix() throws IOException{
         String fileName = "drawGraph.py";
         FileWriter writer = new FileWriter(fileName);
@@ -280,7 +301,7 @@ public class MultiTargetModelGenerator extends MGen{
             }
         }
         writer.write("G = nx.from_numpy_matrix(A,create_using=nx.DiGraph)\n");
-        writer.write("f = plt.figure(figsize=(18.5,10),dpi=90)\n");
+        writer.write("f = plt.figure(figsize=(18.5,10),dpi=80)\n");
         writer.write("f.set_size_inches(18.5,10,forward=True)\n");
         writer.write("nx.draw(G, pos=graphviz_layout(G, prog=\"dot\",root=G.nodes[0]), node_size=1600, with_labels=1)\n");
         writer.write("labels=nx.get_edge_attributes(G,\"weight\")\n");
@@ -290,7 +311,10 @@ public class MultiTargetModelGenerator extends MGen{
     }
 
     /**
-     * This is a class to manage target paths. 
+     * This is a class to manage target paths.
+     * It consists of a targetState Id and a List to track states on the target path
+     * It contains methods that add a state to the target path list, print the list, check if a state is on the list, and
+     * randomly select a state from the list.
      */
     private class TargetPath{
         private int targetState;
@@ -317,7 +341,7 @@ public class MultiTargetModelGenerator extends MGen{
             return path.contains(stateId);
         }
         public int getRandom(){
-            return path.get((int)(Math.random()*path.size()));
+            return path.get((int)(Math.random()*path.size())); 
         }
     }
 }
