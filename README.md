@@ -3,7 +3,9 @@
 These simulations use the PRISM model checker engine to 
 simulate Markov models. Path generation is managed to 
 implement various experiments with importance sampling, 
-importance splitting, and related techniques.
+importance splitting, and related techniques. A brief
+introduction to importance sampling can be found
+[here](docs/importance_sampling_models.md).
 
 <br>
 
@@ -70,7 +72,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `-N` | Number of states to generate (default: 10) |
 | `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
 | `--output` | Name of the output Prism file (default: `sparse-model-%i%.pm`)
-| `--config` | Model generator json config file. See example below
+| `--config` | Model generator json config file. See [example](#example-model-generator-config-file) below
 
 <br>
 
@@ -101,7 +103,7 @@ do this.
 <br>
 
 ## Example model generator config file
-Note: JSON does not actually support comments
+*Note: JSON does not actually support comments
 ```json
 // Placeholders:
 //      %i% - the index of this model, from 1 to "iterations"
@@ -131,6 +133,9 @@ Note: JSON does not actually support comments
     }
 }
 ```
+
+Additional documentation for specifying probability distributions can be found
+[here](docs/ProbabilityDistribution.md)
 
 <br>
 
