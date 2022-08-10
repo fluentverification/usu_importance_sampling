@@ -260,7 +260,8 @@ public class MultiTargetModelGenerator extends MGen{
     private void processMatrix() throws IOException{
         String fileName = "drawGraph.py";
         FileWriter writer = new FileWriter(fileName);
-        writer.write("import networkx as nx\nimport numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n");
+        String imports = "from turtle import forward\nimport networkx as nx\nimport numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport scipy as sc\nimport tkinter as tk\nfrom networkx.drawing.nx_agraph import graphviz_layout\nfrom matplotlib import figure\n";
+        writer.write(imports);
         writer.write("A = np.matrix([");
         for(int i = 0; i < adjacencyMatrix.length; i++){
             for(int j = 0; j < adjacencyMatrix[i].length; j++){
@@ -279,9 +280,12 @@ public class MultiTargetModelGenerator extends MGen{
             }
         }
         writer.write("G = nx.from_numpy_matrix(A,create_using=nx.DiGraph)\n");
-        writer.write("f = plt.figure()\n");
-        writer.write("nx.draw(G,with_labels=1,ax=f.add_subplot(111))\n");
-        writer.write("f.savefig(\"multi-target.png\")\n");
+        writer.write("f = plt.figure(figsize=(18.5,10),dpi=90)\n");
+        writer.write("f.set_size_inches(18.5,10,forward=True)\n");
+        writer.write("nx.draw(G, pos=graphviz_layout(G, prog=\"dot\",root=G.nodes[0]), node_size=1600, with_labels=1)\n");
+        writer.write("labels=nx.get_edge_attributes(G,\"weight\")\n");
+        writer.write("nx.draw_networkx_edge_labels(G,pos=graphviz_layout(G,prog=\"dot\",root=G.nodes[0]),edge_labels=labels)\n");
+        writer.write("f.savefig(\"multi-target.png\")");
         writer.close();
     }
 
