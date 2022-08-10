@@ -70,7 +70,7 @@ public class ScaffoldImportanceSampling extends Command {
 	@Option(name="--raw",usage="Print raw output values")
 	public boolean raw = false;
 
-	@Option(name="--model",usage="Prism model file name")
+	@Option(name="--model",metaVar="FILENAME",usage="Prism model file name")
 	public String modelFileName = "models/example.pm";
 
 	public void printArgs() {

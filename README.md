@@ -7,7 +7,7 @@ importance splitting, and related techniques.
 
 <br>
 
-# Build Instructions and Usage
+# Build Instructions
 
 Tested on Ubuntu 20 *WSL* and Centos 7
 
@@ -24,7 +24,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
-## Build instructions:
+## Build:
 
 1. Run `./gradlew build`
 
@@ -41,11 +41,20 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
- ## Usage:
+# Usage:
+
+ ### Common Arguments
+
+ | Usage: | `./bin/run.sh <command> [OPTION]...` |
+ |---|---|
+ | `-v` | Verbose logging (Info level) |
+ | `-vv` | Verbose logging (Debug level) |
+ | `-vvv` | Verbose logging (Trace level) |
+ | `--quiet` | Suppress logging to console, except for errors |
 
 ### Scaffold Importance Sampling
 
-| Usage: | `/bin/run.sh simulate [OPTION]...` |
+| Usage: | `./bin/run.sh simulate [OPTION]...` |
 |-|-|
 | `-M` | Transition multiplier (default: 2) |
 | `-Tmax` | Maximum transitions before truncating (default: 1,000) |
@@ -53,14 +62,21 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `--raw` | Print raw output values, no labels |
 | `--model` | Prism model file name |
 
-### Sparse Model Generator
-| Usage: | `./bin/run.sh generate [OPTION]...` |
+### Model Generator (MGen)
+| Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
 |-|-|
+| `mgenID` | The model generator to use (currently only `sparse`) |
 | `-I` | Number of models to generate, iterations. (default: 1) |
 | `-N` | Number of states to generate (default: 10) |
 | `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
 | `--output` | Name of the output Prism file (default: `sparse-model-%i%.pm`)
 | `--config` | Model generator json config file. See example below
+
+<br>
+
+The absolute path to `/.bin/run.sh` could be added to the user or system path
+as a symlink `imsam` if desired. Later version may have an install option to
+do this.
 
 <br><br>
 
@@ -70,12 +86,14 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 ### If using WSL , the following configuration is a recommended basic setup
   1. Clone repo to windows filesystem. (ex: `C:/Users/*\<username\>*/git-clones/`)
+      - Note: Accessing the Windows file system from WSL is slower, but is more convenient
+      and still provides sufficient performance for this use case.
   2. Create a symlink in WSL by running
   ```ln -s /mnt/c/Users/*\<username\>*/git-clones/usu_importance_sampling ~/```
   3. Open VS code and install the `Remote - WSL` extension
   4. Click the bottom-left green button and open a WSL instance
 
-### Recommended VS Code Extensions (Installed in WSL)
+### Recommended VS Code Extensions (Installed in WSL instance)
 - Extension Pack for Java
 - GitLens (Optional, but recommended)
 - Code Spell Checker (Optional, but recommended)
@@ -118,7 +136,7 @@ Note: JSON does not actually support comments
 
 ## Argument Parsing
 
-[Documentation link.](https://args4j.kohsuke.org/args4j/apidocs/) `Option` and `Argument` are the most useful.
+**[Documentation link.](https://args4j.kohsuke.org/args4j/apidocs/)** `Option` and `Argument` are the most useful.
 
 This utility uses the `org.kohsuke.args4j` library. The `Main` class handles parsing the
 arguments, then passes control to one of the subcommands. All subcommands extend the abstract
@@ -160,7 +178,7 @@ Verbose logging options are already implemented by the abstract class `Command`.
 
 ## Logging
 
-[Documentation link](https://logging.apache.org/log4j/2.x/manual/api.html)
+**[Documentation link](https://logging.apache.org/log4j/2.x/manual/api.html)**
 
 This utility uses the `org.apache.logging.log4j` library (log4j v2). The main configuration
 is in the `src/main/resources/log4j.properties` and setup is handled by `Main`. Each class

@@ -25,6 +25,7 @@ dependencies {
     // libBundle configuration
     libBundle "org.json:json:20220320"
     libBundle "args4j:args4j:2.33"
+    libBundle "org.apache.logging.log4j:log4j-api:2.18.0"
     libBundle "org.apache.logging.log4j:log4j-core:2.18.0"
     configurations.implementation.extendsFrom(configurations.libBundle)
 
@@ -47,6 +48,7 @@ dependencies {
 jar {
     manifest {
         attributes "Main-Class": "imsam.scaffoldImportanceSampling"
+        attributes "Multi-Release": true
     }
     from {
         // This bundles all the dependencies from libBundle into the jar
