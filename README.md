@@ -74,6 +74,14 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
+### Multi-target Model Generator Options
+ Usage: | `./bin/run.sh mgen multi-target [OPTION]...` |
+|-|-|
+| `--target-list`  | List of states that paths will terminate in, must placed in a space-separated string (ex. `"1 4 2"`). Cannot be used with `--absorb`.  |
+| `--absorb` | Creates an absorbing state that all states not on the target path will go to in one step. Cannot be used with `--target-list`. |
+| `--simple` | Generate only target paths |
+
+<br>
 The absolute path to `/.bin/run.sh` could be added to the user or system path
 as a symlink `imsam` if desired. Later version may have an install option to
 do this.

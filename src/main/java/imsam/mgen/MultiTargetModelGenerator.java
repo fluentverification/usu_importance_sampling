@@ -20,8 +20,14 @@ public class MultiTargetModelGenerator extends MGen{
 
     //////////////////////////////////////////////////
     // CLI Arguments
-    @Option(name="--target-list",usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
+    @Option(name="--target-list",aliases = "-tl",forbids = "--absorb",
+    usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
     public String targetList = "";
+    @Option(name="--absorb", aliases="-a", forbids="--target-list",
+    usage="Creates an absorbing state that all states will go to in one step")
+    public boolean absorb = false;
+    @Option(name="--simple", usage="generate only target paths")
+    public boolean simple = false;
     // end CLI Arguments
     //////////////////////////////////////////////////
 
@@ -35,47 +41,57 @@ public class MultiTargetModelGenerator extends MGen{
     //Parse config file options
     @Override 
     protected boolean parseSubclassConfigParam(JSONObject json, String key){
-        if(key == "targetList"){
-            if(targetList.isBlank()){
-                targetList = json.getString(key);
-            }
+      switch(key){
+        case "target-list": 
+            targetList=json.getString(key);
             return true;
-        } else {
-            return false;
-        }
+        case "simple" :
+            simple = true;
+            return true;
+        case "absorb" : 
+            absorb = true;
+            return true;
+        default : return false;
+      }
     }
 
     //Set default options
     @Override
     protected void initSubclassParamDefaults(){
-        logger.debug("Initializing Subclass Parameter Defaults");
-        if(targetList.isBlank()){
-            logger.debug("target-list is blank, generating target states");
-            targets = generateTargetStates();
-        } else {
-            logger.debug("target list is "+ targetList);
-            String[] parsedTargetList = targetList.split(" ");
-            targets = new ArrayList<>();
-            logger.debug("Parsing target list");
-            for(String targetString : parsedTargetList){
-                try{
-                    logger.trace("Parsing: "+targetString);
-                    int targetCandidate = Integer.parseInt(targetString);
-                    if(targetCandidate>numberOfStates-1 || targetCandidate==0){
-                        String errMsg = "Targets must be in the state space and cannot be the initial state";
+        logger.debug("-------------Initializing Subclass Parameter Defaults-------------");
+        if(!absorb){
+            if(targetList.isBlank()){
+                logger.debug("-------------target-list is blank, generating target states-------------");
+                targets = generateTargetStates();
+            } else {
+                logger.debug("-------------target list is "+ targetList+"-------------");
+                String[] parsedTargetList = targetList.split(" ");
+                targets = new ArrayList<>();
+                logger.debug("-------------Parsing target list-------------");
+                for(String targetString : parsedTargetList){
+                    try{
+                        logger.trace("Parsing: "+targetString);
+                        int targetCandidate = Integer.parseInt(targetString);
+                        if(targetCandidate>numberOfStates-1 || targetCandidate==0){
+                            String errMsg = "Targets must be in the state space and cannot be the initial state";
+                            logger.error(errMsg);
+                            System.exit(1);
+                        } else {
+                            logger.debug("-------------adding "+ targetCandidate+ " to target ArrayList-------------");
+                            targets.add(targetCandidate);
+                        }
+                    }catch(NumberFormatException e){
+                        String errMsg = "The target state list must be made up of integers separated by a space. "+
+                        "Ex)\"1 5 9 12\"";
                         logger.error(errMsg);
                         System.exit(1);
-                    } else {
-                        logger.debug("adding "+ targetCandidate+ " to target ArrayList");
-                        targets.add(targetCandidate);
                     }
-                }catch(NumberFormatException e){
-                    String errMsg = "The target state list must be made up of integers separated by a space. "+
-                    "Ex)\"1 5 9 12\"";
-                    logger.error(errMsg);
-                    System.exit(1);
                 }
             }
+        } else {
+            //if absorb is selected then the target list will only contain the target state
+            targets = new ArrayList<>();
+            targets.add(targetState);
         }
     }
 
@@ -93,7 +109,7 @@ public class MultiTargetModelGenerator extends MGen{
 
         //initializing state space
         stateSpace = new State[numberOfStates];
-        logger.debug("Initializing state space");
+        logger.debug("-------------Initializing state space-------------");
         for(int stateId=0; stateId < numberOfStates; stateId++){
             stateSpace[stateId] = new State(stateId);
         }
@@ -104,9 +120,10 @@ public class MultiTargetModelGenerator extends MGen{
          * A check is done to ensure that the predecessor is not already on the path and is not a target state.
          * Predecessors are tracked using the TargetPath class.
         */
-        logger.debug("Generating target path(s)");
+        logger.debug("-------------Generating target path(s)-------------");
         TargetPath targetPathTracker[] = new TargetPath[targets.size()];
         boolean targetPathCheck[] = new boolean[numberOfStates];
+        int initial = 0;
         for(int targetIdx = 0; targetIdx < targets.size(); targetIdx++){
             int currentTarget = targets.get(targetIdx);
             logger.trace("Starting path for "+ currentTarget);
@@ -114,9 +131,15 @@ public class MultiTargetModelGenerator extends MGen{
             logger.trace("Setting targetPathCheck["+currentTarget+"] to true");
             targetPathCheck[currentTarget] = true;
             int current = currentTarget;
-            int initial = 0;
+            int count = 1;
             while(current != initial){
                 int predecessor = (int)(Math.random()*numberOfStates);
+                //if absorb is selected guarantee one state is not on target path
+                if(absorb && count==numberOfStates-2){
+                    logger.debug("-------------Forcing to initial-------------");
+                    predecessor = initial;
+                }
+                //Check if predecessor is valid, redraw if not
                 while(targets.contains(predecessor) || current == predecessor || targetPathTracker[targetIdx].onPath(predecessor)){
                     logger.trace(predecessor + " is an invalid predecessor. Redrawing");
                     predecessor = (int)(Math.random()*numberOfStates);
@@ -126,6 +149,7 @@ public class MultiTargetModelGenerator extends MGen{
                     predecessor, 
                     current, 
                     rate);
+                //Make sure transition does not already exist
                 if(!stateSpace[current].transitionInExists(transition)){
                     logger.trace("Connecting state "+predecessor+" to state "+current);
                     stateSpace[current].transitionsIn.add(transition);
@@ -140,6 +164,7 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
                 current = predecessor;
+                count++;
             }
             logger.debug("Target Path: "+targetPathTracker[targetIdx]); //Print target path
         }
@@ -150,7 +175,7 @@ public class MultiTargetModelGenerator extends MGen{
          * selected target path. Predecessors will not be allowed to target states, and checks will be done to ensure that 
          * a transition does not already exist.
         */
-        logger.debug("Ensuring all states are on target path");
+        logger.debug("-------------Ensuring all states are on target path-------------");
         List<Integer> notOnPath = new ArrayList<>();
         for(int stateId = 0; stateId < numberOfStates; stateId++){
             if(!targetPathCheck[stateId]){
@@ -158,16 +183,28 @@ public class MultiTargetModelGenerator extends MGen{
                 logger.trace(stateId+ " is not on a path");
             }
         }
+        //If absorb is selected then a random will state will be chosen from states not on the path
+        int absorbingState=-1;
+        if(absorb){
+            absorbingState = notOnPath.get((int)(Math.random()*notOnPath.size()));
+            notOnPath.remove(notOnPath.indexOf(absorbingState));
+            logger.debug("-------------Setting absorbing state to "+ absorbingState+"-------------");
+            int rate = (int) transitionRateDistribution.random();
+            TransitionPath initialToAbsorb = new TransitionPath(initial, absorbingState, rate);
+            adjacencyMatrix[initial][absorbingState] = rate;
+            stateSpace[initial].transitionsOut.add(initialToAbsorb);
+            stateSpace[absorbingState].transitionsIn.add(initialToAbsorb);
+        }
         //Add all states that are not on a path to a target path
         if(notOnPath.size() > 0){
-            logger.debug("Adding all states to a target path");
+            logger.debug("-------------Adding all states to a target path-------------");
             for(int stateId : notOnPath){
                 int predecessor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
                 while(targets.contains(predecessor)){
                     logger.trace(predecessor + " is not a valid predecessor. Redrawing");
                     predecessor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
                 }
-                int successor = targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
+                int successor = absorb?absorbingState:targetPathTracker[(int)(targets.size()*Math.random())].getRandom();
                 //Create successor transition and add if it does not already exist
                 int rate = (int)transitionRateDistribution.random();
                 TransitionPath successorTransition = new TransitionPath(
@@ -200,45 +237,48 @@ public class MultiTargetModelGenerator extends MGen{
                 }
             }
         } else {
-            logger.debug("All states are on a target path");
+            logger.debug("-------------All states are already on a target path-------------");
         }
 
         /*
          * Once every state is on a target path, transitions are randomly generated to connect the model for every state except
          * the initial state and target states. The successor state is not allowed to be the current state, and if the 
-         * transition already exists with a different rate then that transition is skipped.
+         * transition already exists with a different rate then that transition is skipped. If it is a simple model 
+         * then this section is skipped.
          */
-        logger.debug("Randomly generating other transitions");
-        for(State state : stateSpace){
-            int numberOfTransitions =(int)transitionCountDistribution.random();
-            logger.trace("Generating "+ numberOfTransitions+ " transitions for "+ state.stateId);
-            if(!targets.contains(state.stateId) || state.stateId == 0){
-                for(int transitionId = 0; transitionId<numberOfTransitions; transitionId++){
-                    int successor = (int)(Math.random()*numberOfStates);
-                    int rate = (int)transitionRateDistribution.random(); 
-                    TransitionPath transition = new TransitionPath(
-                        state.stateId, 
-                        successor, 
-                        rate);
-                    if((!state.transitionOutExists(transition)) && (successor != state.stateId)){
-                        logger.trace("Connecting state " +state.stateId+ " to state "+ successor);
-                        state.transitionsOut.add(transition);
-                        stateSpace[successor].transitionsIn.add(transition);
-                        //add to adjacency matrix
-                        adjacencyMatrix[state.stateId][successor] = rate;
-                    } else {
-                        logger.trace(state.stateId+" already connects to "+successor);;
+        if(!simple){
+            logger.debug("-------------Randomly generating other transitions-------------");
+            for(State state : stateSpace){
+                int numberOfTransitions =(int)transitionCountDistribution.random();
+                logger.trace("Generating "+ numberOfTransitions+ " transitions for "+ state.stateId);
+                if(!targets.contains(state.stateId) || state.stateId != 0 || state.stateId == absorbingState){
+                    for(int transitionId = 0; transitionId<numberOfTransitions; transitionId++){
+                        int successor = (int)(Math.random()*numberOfStates);
+                        int rate = (int)transitionRateDistribution.random(); 
+                        TransitionPath transition = new TransitionPath(
+                            state.stateId, 
+                            successor, 
+                            rate);
+                        if((!state.transitionOutExists(transition)) && (successor != state.stateId)){
+                            logger.trace("Connecting state " +state.stateId+ " to state "+ successor);
+                            state.transitionsOut.add(transition);
+                            stateSpace[successor].transitionsIn.add(transition);
+                            //add to adjacency matrix
+                            adjacencyMatrix[state.stateId][successor] = rate;
+                        } else {
+                            logger.trace(state.stateId+" already connects to "+successor);;
+                        }
                     }
+                } else {
+                    logger.trace("Skipping target state "+ state.stateId);
                 }
-            } else {
-                logger.trace("Skipping target state "+ state.stateId);
             }
         }
         /*
          * Finally to help visualize the generated model, a python script is generated that will draw the graph.
          * It utilizes the networkx, matplotlib, and graphviz libraries. Total runtime is also calculated.
          */
-        logger.debug("Generating drawGraph.py");
+        logger.debug("-------------Generating drawGraph.py-------------");
         try{
             processMatrix();
         }catch(IOException e){
@@ -260,7 +300,7 @@ public class MultiTargetModelGenerator extends MGen{
         logger.info("Target Bound: "+targetBound);
         int numberOfTargets = (int)((Math.random()*(targetBound-1))+1); //Randomly choose number of targets, always ensuring at least 1
         logger.info("Target Size: "+numberOfTargets);
-        logger.debug(numberOfTargets+(numberOfTargets==1?" state has ":" states have ")+"been selected as target(s)");
+        logger.debug("-------------"+numberOfTargets+(numberOfTargets==1?" state has ":" states have ")+"been selected as target(s)-------------");
         for(int targetIndex = 0; targetIndex < numberOfTargets; targetIndex++){
             //draw targets
             int pickTarget = (int)((Math.random()*(numberOfStates-1))+1); 
@@ -343,6 +383,9 @@ public class MultiTargetModelGenerator extends MGen{
         }
         public int getRandom(){
             return path.get((int)(Math.random()*path.size())); 
+        }
+        public int getSize(){
+            return path.size();
         }
     }
 }
