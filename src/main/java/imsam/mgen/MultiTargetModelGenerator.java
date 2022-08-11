@@ -1,7 +1,5 @@
 package imsam.mgen;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +14,6 @@ import org.kohsuke.args4j.Option;
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     public static final String MODEL_ID = "multi-target";
-    public int[][] adjacencyMatrix; //Matrix to draw graph with 
 
     //////////////////////////////////////////////////
     // CLI Arguments
@@ -105,7 +102,6 @@ public class MultiTargetModelGenerator extends MGen{
     @Override
     protected void generateModel(){
         long start = System.nanoTime(); //to calculate runtime
-        adjacencyMatrix = new int[numberOfStates][numberOfStates]; //Only used to draw graph
 
         //initializing state space
         stateSpace = new State[numberOfStates];
@@ -159,7 +155,6 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace("Setting targetPathCheck["+predecessor+"] to true");
                     targetPathCheck[predecessor] = true;
                     //Add to adjacency matrix
-                    adjacencyMatrix[predecessor][current] = rate;
                 } else {
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
@@ -191,7 +186,6 @@ public class MultiTargetModelGenerator extends MGen{
             logger.debug("-------------Setting absorbing state to "+ absorbingState+"-------------");
             int rate = (int) transitionRateDistribution.random();
             TransitionPath initialToAbsorb = new TransitionPath(initial, absorbingState, rate);
-            adjacencyMatrix[initial][absorbingState] = rate;
             stateSpace[initial].transitionsOut.add(initialToAbsorb);
             stateSpace[absorbingState].transitionsIn.add(initialToAbsorb);
         }
@@ -215,8 +209,6 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace("Connecting state " +stateId+ " to state "+ successor);
                     stateSpace[stateId].transitionsOut.add(successorTransition);
                     stateSpace[successor].transitionsIn.add(successorTransition);
-                    //add to adjacency matrix
-                    adjacencyMatrix[stateId][successor] = rate;
                 } else {
                     logger.trace(stateId+" already connects to "+ successor);
                 }
@@ -230,8 +222,6 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace("Connecting state " +predecessor+ " to state "+ stateId);
                     stateSpace[predecessor].transitionsOut.add(predTransition);
                     stateSpace[stateId].transitionsIn.add(predTransition);
-                    //add to adjacency matrix 
-                    adjacencyMatrix[predecessor][stateId] = rate;
                 } else {
                     logger.trace(predecessor+" already connects to "+stateId);
                 }
@@ -263,8 +253,6 @@ public class MultiTargetModelGenerator extends MGen{
                             logger.trace("Connecting state " +state.stateId+ " to state "+ successor);
                             state.transitionsOut.add(transition);
                             stateSpace[successor].transitionsIn.add(transition);
-                            //add to adjacency matrix
-                            adjacencyMatrix[state.stateId][successor] = rate;
                         } else {
                             logger.trace(state.stateId+" already connects to "+successor);;
                         }
@@ -274,16 +262,7 @@ public class MultiTargetModelGenerator extends MGen{
                 }
             }
         }
-        /*
-         * Finally to help visualize the generated model, a python script is generated that will draw the graph.
-         * It utilizes the networkx, matplotlib, and graphviz libraries. Total runtime is also calculated.
-         */
-        logger.debug("-------------Generating drawGraph.py-------------");
-        try{
-            processMatrix();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
+        //Calculate runtime
         long end = System.nanoTime();
         logger.info(numberOfStates+"-state model generated in "+(end-start)/1000000+ "ms");
     }
@@ -313,42 +292,6 @@ public class MultiTargetModelGenerator extends MGen{
         }
         logger.info("Generated Target States: "+ strBld.toString());
         return targets;
-    }
-
-    /**
-     * This method generates a python script to draw the generated model.
-     * It utilizes the matplotlib, networkx, and graphviz libraries.
-     */
-    private void processMatrix() throws IOException{
-        String fileName = "drawGraph.py";
-        FileWriter writer = new FileWriter(fileName);
-        String imports = "from turtle import forward\nimport networkx as nx\nimport numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport scipy as sc\nimport tkinter as tk\nfrom networkx.drawing.nx_agraph import graphviz_layout\nfrom matplotlib import figure\n";
-        writer.write(imports);
-        writer.write("A = np.matrix([");
-        for(int i = 0; i < adjacencyMatrix.length; i++){
-            for(int j = 0; j < adjacencyMatrix[i].length; j++){
-                if(j == 0){
-                    writer.write("[");
-                }
-                writer.write(adjacencyMatrix[i][j]+",");
-                if(j == (adjacencyMatrix[i].length-1)){
-                    writer.write("]");
-                }
-            }
-            if(i == adjacencyMatrix.length-1){
-                writer.write("])\n");
-            } else {
-                writer.write(",");
-            }
-        }
-        writer.write("G = nx.from_numpy_matrix(A,create_using=nx.DiGraph)\n");
-        writer.write("f = plt.figure(figsize=(18.5,10),dpi=80)\n");
-        writer.write("f.set_size_inches(18.5,10,forward=True)\n");
-        writer.write("nx.draw(G, pos=graphviz_layout(G, prog=\"dot\",root=G.nodes[0]), node_size=1600, with_labels=1)\n");
-        writer.write("labels=nx.get_edge_attributes(G,\"weight\")\n");
-        writer.write("nx.draw_networkx_edge_labels(G,pos=graphviz_layout(G,prog=\"dot\",root=G.nodes[0]),edge_labels=labels)\n");
-        writer.write("f.savefig(\"multi-target.png\")");
-        writer.close();
     }
 
     /**
