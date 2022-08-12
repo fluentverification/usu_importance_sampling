@@ -13,7 +13,7 @@ import org.kohsuke.args4j.Option;
  */
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
-    public static final String MODEL_ID = "multi-target";
+    public static final String MGEN_ID = "multi-target";
     TargetPath targetPathTracker[];
 
     //////////////////////////////////////////////////
@@ -32,8 +32,8 @@ public class MultiTargetModelGenerator extends MGen{
 
     //Set default file name
     @Override
-    public String MGEN_ID(){
-        return MODEL_ID;
+    public String getMGenID(){
+        return MGEN_ID;
     }
 
     //Parse config file options
@@ -350,9 +350,6 @@ public class MultiTargetModelGenerator extends MGen{
         }
         public int getRandom(){
             return path.get((int)(Math.random()*path.size())); 
-        }
-        public int getSize(){
-            return path.size();
         }
     }
 }
