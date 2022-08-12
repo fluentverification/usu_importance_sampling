@@ -14,11 +14,12 @@ import org.kohsuke.args4j.Option;
 public class MultiTargetModelGenerator extends MGen{
     public List<Integer> targets;
     public static final String MODEL_ID = "multi-target";
+    TargetPath targetPathTracker[];
 
     //////////////////////////////////////////////////
     // CLI Arguments
-    @Option(name="--target-list",aliases = "-tl",forbids = "--absorb",
-    usage="In a space-separated String, list states that all paths will converge to. default: generates random targets")
+    @Option(name="--target-list",aliases = "-l",forbids = "--absorb",
+    usage="In a comma-separated String, list states that all paths will converge to. Target State is added by default. default: generates random targets")
     public String targetList = "";
     @Option(name="--absorb", aliases="-a", forbids="--target-list",
     usage="Creates an absorbing state that all states will go to in one step")
@@ -61,28 +62,33 @@ public class MultiTargetModelGenerator extends MGen{
                 logger.debug("-------------target-list is blank, generating target states-------------");
                 targets = generateTargetStates();
             } else {
-                logger.debug("-------------target list is "+ targetList+"-------------");
-                String[] parsedTargetList = targetList.split(" ");
-                targets = new ArrayList<>();
-                logger.debug("-------------Parsing target list-------------");
-                for(String targetString : parsedTargetList){
-                    try{
-                        logger.trace("Parsing: "+targetString);
-                        int targetCandidate = Integer.parseInt(targetString);
-                        if(targetCandidate>numberOfStates-1 || targetCandidate==0){
-                            String errMsg = "Targets must be in the state space and cannot be the initial state";
+                if(targetList == Integer.toString(targetState)){
+                    targets.add(targetState);
+                } else {
+                    logger.debug("-------------target list is "+ targetList+"-------------");
+                    String[] parsedTargetList = targetList.split(",");
+                    targets = new ArrayList<>();
+                    logger.debug("-------------Parsing target list-------------");
+                    for(String targetString : parsedTargetList){
+                        try{
+                            logger.trace("Parsing: "+targetString);
+                            int targetCandidate = Integer.parseInt(targetString);
+                            if(targetCandidate>numberOfStates-1 || targetCandidate==0){
+                                String errMsg = "Targets must be in the state space and cannot be the initial state";
+                                logger.error(errMsg);
+                                System.exit(1);
+                            } else {
+                                logger.debug("-------------adding "+ targetCandidate+ " to target ArrayList-------------");
+                                targets.add(targetCandidate);
+                            }
+                        }catch(NumberFormatException e){
+                            String errMsg = "The target state list must be made up of integers separated by a space. "+
+                            "Ex)\"1 5 9 12\"";
                             logger.error(errMsg);
                             System.exit(1);
-                        } else {
-                            logger.debug("-------------adding "+ targetCandidate+ " to target ArrayList-------------");
-                            targets.add(targetCandidate);
                         }
-                    }catch(NumberFormatException e){
-                        String errMsg = "The target state list must be made up of integers separated by a space. "+
-                        "Ex)\"1 5 9 12\"";
-                        logger.error(errMsg);
-                        System.exit(1);
                     }
+                    targets.add(targetState);
                 }
             }
         } else {
@@ -117,7 +123,7 @@ public class MultiTargetModelGenerator extends MGen{
          * Predecessors are tracked using the TargetPath class.
         */
         logger.debug("-------------Generating target path(s)-------------");
-        TargetPath targetPathTracker[] = new TargetPath[targets.size()];
+        targetPathTracker = new TargetPath[targets.size()];
         boolean targetPathCheck[] = new boolean[numberOfStates];
         int initial = 0;
         for(int targetIdx = 0; targetIdx < targets.size(); targetIdx++){
@@ -156,6 +162,9 @@ public class MultiTargetModelGenerator extends MGen{
                     targetPathCheck[predecessor] = true;
                     //Add to adjacency matrix
                 } else {
+                    if(!targetPathTracker[targetIdx].onPath(predecessor)){
+                        targetPathTracker[targetIdx].addState(predecessor);
+                    }
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
                 current = predecessor;
@@ -241,7 +250,7 @@ public class MultiTargetModelGenerator extends MGen{
             for(State state : stateSpace){
                 int numberOfTransitions =(int)transitionCountDistribution.random();
                 logger.trace("Generating "+ numberOfTransitions+ " transitions for "+ state.stateId);
-                if(!targets.contains(state.stateId) || state.stateId != 0 || state.stateId == absorbingState){
+                if(!targets.contains(state.stateId) && state.stateId != 0 && state.stateId != absorbingState){
                     for(int transitionId = 0; transitionId<numberOfTransitions; transitionId++){
                         int successor = (int)(Math.random()*numberOfStates);
                         int rate = (int)transitionRateDistribution.random(); 
@@ -274,8 +283,7 @@ public class MultiTargetModelGenerator extends MGen{
     private List<Integer> generateTargetStates(){
         StringBuilder strBld = new StringBuilder();
         List<Integer> targets = new ArrayList<>();
-        double third = 1/3.0f;
-        int targetBound = (numberOfStates==2)?1:(int)(third*numberOfStates); //get bound targets to 1/3 of state space
+        int targetBound = (numberOfStates==2)?1:(numberOfStates/3); //get bound targets to 1/3 of state space
         logger.info("Target Bound: "+targetBound);
         int numberOfTargets = (int)((Math.random()*(targetBound-1))+1); //Randomly choose number of targets, always ensuring at least 1
         logger.info("Target Size: "+numberOfTargets);
@@ -290,10 +298,25 @@ public class MultiTargetModelGenerator extends MGen{
             targets.add(pickTarget);
             strBld.append(pickTarget+" ");
         }
+        if(!targets.contains(targetState)){
+            targets.add(targetState);
+            strBld.append(targetState);
+        }
         logger.info("Generated Target States: "+ strBld.toString());
         return targets;
     }
 
+    @Override
+    protected void generateSeedPath() {
+        for(int i = targetPathTracker.length-1; i >= 0; i--){
+            if(targetPathTracker[i].targetState == targetState){
+                seedPath = targetPathTracker[i].toString();
+                return;
+            }
+        }
+        logger.error("Seed Path not found");
+        System.exit(1);
+    }
     /**
      * This is a class to manage target paths.
      * It consists of a targetState Id and a List to track states on the target path
@@ -316,9 +339,10 @@ public class MultiTargetModelGenerator extends MGen{
         @Override
         public String toString(){
             StringBuilder strBld = new StringBuilder();
-            for(int i = path.size()-1; i >= 0; i--){
-                strBld.append(path.get(i)+ " ");
+            for(int i = path.size()-1; i >= 1; i--){
+                strBld.append(path.get(i)+ ",");
             }
+            strBld.append(this.targetState);
             return strBld.toString();
         }
         public boolean onPath(int stateId){
