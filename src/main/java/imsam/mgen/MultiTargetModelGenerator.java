@@ -18,7 +18,7 @@ public class MultiTargetModelGenerator extends MGen{
 
     //////////////////////////////////////////////////
     // CLI Arguments
-    @Option(name="--target-list",aliases = "-l",forbids = "--absorb",
+    @Option(name="--target-list",aliases = "-L",forbids = "--absorb",
     usage="In a comma-separated String, list states that all paths will converge to. Target State is added by default. default: generates random targets")
     public String targetList = "";
     @Option(name="--absorb", aliases="-a", forbids="--target-list",
