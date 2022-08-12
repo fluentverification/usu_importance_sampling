@@ -77,7 +77,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 ### Multi-target Model Generator Options
  Usage: | `./bin/run.sh mgen multi-target [OPTION]...` |
 |-|-|
-| `--target-list`  | List of states that paths will terminate in, must placed in a space-separated string (ex. `"1 4 2"`). Cannot be used with `--absorb`.  |
+| `--target-list`  | List of states that paths will terminate in, must placed in a comma-separated string (ex. `"1 4 2"`). Automatically adds state specified by `--target-state`. Cannot be used with `--absorb`.  |
 | `--absorb` | Creates an absorbing state that all states not on the target path will go to in one step. Cannot be used with `--target-list`. |
 | `--simple` | Generate only target paths |
 
