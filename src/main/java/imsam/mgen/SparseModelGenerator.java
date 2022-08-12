@@ -5,7 +5,8 @@ public class SparseModelGenerator extends MGen {
 
     public static final String MGEN_ID = "sparse";
 
-    public String MGEN_ID() {
+    @Override
+    public String getMGenID() {
         return MGEN_ID;
     }
     
