@@ -133,8 +133,7 @@ public class MultiTargetModelGenerator extends MGen{
             logger.trace("Setting targetPathCheck["+currentTarget+"] to true");
             targetPathCheck[currentTarget] = true;
             int current = currentTarget;
-            int count = 1;
-            while(current != initial){
+            for(int count = 1; current != initial; count++){
                 int predecessor = (int)(Math.random()*numberOfStates);
                 //if absorb is selected guarantee one state is not on target path
                 if(absorb && count==numberOfStates-2){
