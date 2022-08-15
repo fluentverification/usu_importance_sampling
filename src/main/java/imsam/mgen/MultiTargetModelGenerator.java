@@ -167,7 +167,6 @@ public class MultiTargetModelGenerator extends MGen{
                     logger.trace("Transition between "+ predecessor+ " and "+ current+ " already exists");
                 }
                 current = predecessor;
-                count++;
             }
             logger.debug("Target Path: "+targetPathTracker[targetIdx]); //Print target path
         }
