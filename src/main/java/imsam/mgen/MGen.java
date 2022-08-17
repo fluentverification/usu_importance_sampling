@@ -43,6 +43,7 @@ public abstract class MGen extends Command {
     @Option(name="--config",metaVar="FILENAME",usage="model generator config json file. See README for examples.")
     public String configFilename = "";
 
+
     // end CLI Arguments
     //////////////////////////////////////////////////
 
@@ -191,7 +192,11 @@ public abstract class MGen extends Command {
         int tracker = 0;
         while(tracker != targetState) {
             strBldr.append(tracker + ",");
-            tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
+            if(stateSpace[tracker].transitionsOut.size() != 0){
+                tracker = stateSpace[tracker].transitionsOut.get((int) (Math.random() * stateSpace[tracker].transitionsOut.size())).end;
+            } else {
+                break;
+            }
         }
         strBldr.append(tracker);
         seedPath = strBldr.toString();
@@ -207,13 +212,17 @@ public abstract class MGen extends Command {
         writer.write("    x : [0.."+(numberOfStates-1)+"];\n");
         for (int i=0; i<numberOfStates; i++) {
             writer.write("    [] x=" + i + " -> ");
-            for (int i2=0; i2<stateSpace[i].transitionsOut.size(); i2++) {
-                TransitionPath transition = stateSpace[i].transitionsOut.get(i2);
-                writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
-                if (i2+1 < stateSpace[i].transitionsOut.size()) {
-                    writer.write(" + ");
-                } else {
-                    writer.write(";\n");
+            if(stateSpace[i].transitionsOut.size() == 0){
+                writer.write(" true;\n");
+            } else {
+                for (int j=0; j<stateSpace[i].transitionsOut.size(); j++) {
+                    TransitionPath transition = stateSpace[i].transitionsOut.get(j);
+                    writer.write((int) transition.rate + ":(x'=" + transition.end + ")");
+                    if (j+1 < stateSpace[i].transitionsOut.size()) {
+                        writer.write(" + ");
+                    } else {
+                        writer.write(";\n");
+                    }
                 }
             }
         }
@@ -236,6 +245,23 @@ public abstract class MGen extends Command {
             this.stateId = stateId;
             transitionsOut = new ArrayList<>();
             transitionsIn = new ArrayList<>();
+        }
+        boolean transitionInExists(TransitionPath transition){
+            for(TransitionPath check : transitionsIn){
+                if(check.start == transition.start && check.end == transition.end){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        boolean transitionOutExists(TransitionPath transition){
+            for(TransitionPath check : transitionsOut){
+                if(check.start == transition.start && check.end == transition.end){
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
