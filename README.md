@@ -87,11 +87,13 @@ do this.
 ## VS Code Environment
 
 ### If using WSL , the following configuration is a recommended basic setup
-  1. Clone repo to windows filesystem. (ex: `C:/Users/*\<username\>*/git-clones/`)
-      - Note: Accessing the Windows file system from WSL is slower, but is more convenient
-      and still provides sufficient performance for this use case.
-  2. Create a symlink in WSL by running
-  ```ln -s /mnt/c/Users/*\<username\>*/git-clones/usu_importance_sampling ~/```
+  1. Clone the repo
+      - Use Windows file system (ex: `C:/Users/<username>/git-clones/`):
+        Allows use of windows programs such as Git Extensions, but impacts performance
+      - Use Linux file system (ex: `~/git-clones/`):
+        Harder to access from Windows, but much better performance
+  2. If using Windows file system, create a symlink in WSL by running
+  ```ln -s /mnt/c/Users/<username>/git-clones/usu_importance_sampling ~/```
   3. Open VS code and install the `Remote - WSL` extension
   4. Click the bottom-left green button and open a WSL instance
 
