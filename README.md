@@ -67,7 +67,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 ### Model Generator (MGen)
 | Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
 |-|-|
-| `mgenID` | The model generator to use (currently only `sparse`) |
+| `mgenID` | The model generator to use (`sparse` or `multi-target`) |
 | `-I` | Number of models to generate, iterations. (default: 1) |
 | `-N` | Number of states to generate (default: 10) |
 | `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
@@ -76,6 +76,14 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 
 <br>
 
+### Multi-target Model Generator Options
+ Usage: | `./bin/run.sh mgen multi-target [OPTION]...` |
+|-|-|
+| `--target-list`  | List of states that paths will terminate in, must placed in a comma-separated string (ex. `"1 4 2"`). Automatically adds state specified by `--target-state`. Cannot be used with `--absorb`.  |
+| `--absorb` | Creates an absorbing state that all states not on the target path will go to in one step. Cannot be used with `--target-list`. |
+| `--simple` | Generate only target paths |
+
+<br>
 The absolute path to `/.bin/run.sh` could be added to the user or system path
 as a symlink `imsam` if desired. Later version may have an install option to
 do this.
