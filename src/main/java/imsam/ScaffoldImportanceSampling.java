@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -73,11 +74,11 @@ public class ScaffoldImportanceSampling extends Command {
 	@Option(name="--model",metaVar="FILENAME",usage="Prism model file name")
 	public String modelFileName = "models/example.pm";
 
-	public void printArgs() {
-		System.out.printf(" M=%f TMAX=%f Nruns=%d modelFile=%s ", M, TMAX, Nruns, modelFileName);
+	public String argsToString() {
+		return String.format("M=%f TMAX=%f Nruns=%d modelFile=%s ", M, TMAX, Nruns, modelFileName);
 	}
-	public void printRawArgs() {
-		System.out.printf("%f\t%f\t%d", M, TMAX, Nruns);
+	public String argsRawToString() {
+		return String.format("%f\t%f\t%d", M, TMAX, Nruns);
 	}
 
 	// end CLI Arguments
@@ -94,14 +95,13 @@ public class ScaffoldImportanceSampling extends Command {
 
 
 	@Override
-	public int exec() {
+	public int exec() throws IOException, PrismException {
 
-		//System.out.println("Running scaffoldImportanceSampling");
-		//System.out.println(args.length + " arguments");
+		logger.debug("Running scaffoldImportanceSampling");
 
 		loadModel();
 		loadCatalog();
-		//printCatalog();
+		printCatalog();		// Prints at TRACE logger level only
 
 		double sum       = 0.0;
 		long   binarySum = 0;
@@ -109,14 +109,14 @@ public class ScaffoldImportanceSampling extends Command {
 
 		List<Double> samples = new ArrayList<>(Nruns);
 		for (int n=0; n < Nruns; n++) {
-			double sample = run();
+			double sample = simulate();
 			sum += sample;
 			if (sample > 0)
 			    binarySum++;
 
 			samples.add(sample);
-			//System.out.println(sim.getPath());
-			//System.out.println("=================");
+			logger.debug(sim.getPath());
+			logger.debug("=================");
 		}	    
 		
 		prism.closeDown();
@@ -130,22 +130,27 @@ public class ScaffoldImportanceSampling extends Command {
 		}
 		double variance = squareSum/((double)Nruns*((double)Nruns-1));
 		if (raw) {
-			System.out.print(mean + "\t" + variance + "\t" + binarySum + "\t" + importanceSampleRate + "\t");
-			printRawArgs();
+			logger.info(mean + "\t" +
+						variance + "\t" +
+						binarySum + "\t" +
+						importanceSampleRate + "\t" +
+						argsRawToString());
 		}
 		else {
-		    System.out.print(" Probability to reach final state: " + mean + ", Variance " + variance + ", non-zero samples "+ binarySum + ", useful sample rate " + importanceSampleRate);
-			printArgs();
+		    logger.info("Probability to reach final state: " + mean +
+						", Variance " + variance +
+						", non-zero samples "+ binarySum +
+						", useful sample rate " + importanceSampleRate +
+						" " + argsToString());
 		}
-		System.out.println("");
 
-		//printCatalog();
+		printCatalog();		// Prints at TRACE logger level only
 
 		return 0;
 
 	}
 
-    public void loadModel() 
+    public void loadModel() throws IOException, PrismException
     {
 		try {
 			//System.out.println("Loading PRISM model from " + params.modelFileName);
@@ -153,7 +158,7 @@ public class ScaffoldImportanceSampling extends Command {
 			// Create a log for PRISM output (hidden or stdout)
 			prismLog = new PrismDevNullLog();
 			
-			// Initialise PRISM engine 
+			// Initialize PRISM engine 
 			prism = new Prism(prismLog);
 			prism.initialise();
 			
@@ -166,22 +171,18 @@ public class ScaffoldImportanceSampling extends Command {
 			sim = prism.getSimulator();
 		}
 		catch (FileNotFoundException e) {
-			System.out.println("File Error: " + e.getMessage());
-			System.exit(1);
-		} catch (PrismException e) {
-			System.out.println("PRISM Error: " + e.getMessage());
-			System.exit(1);
+			throw new IOException("Prism model file not found", e);
 		}
     }
 
     public void printCatalog()
     {
 		for (int i=0; i<catalog.size(); i++) {
-			System.out.println(catalog.get(i));
+			logger.trace(catalog.get(i));
 		}
     }
 
-    public void loadCatalog()
+    public void loadCatalog() throws IOException
     {
 		BufferedReader reader = null;				// Declare outside of try block to be accessible from final block
 		try {
@@ -195,14 +196,8 @@ public class ScaffoldImportanceSampling extends Command {
 			for (String s : seedPathStr) {
 				catalog.add(Integer.parseInt(s));
 			}
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("Error: " + e.getMessage());
-			System.exit(1);
-		}
-		catch (NoSuchElementException e) {
-			System.out.println("Error: No seed path found");
-			System.exit(1);
+		}catch (NoSuchElementException e) {
+			throw new IOException("SeedPath empty or invalid format", e);
 		}
 		finally {
 			if (null != reader) {
@@ -234,51 +229,44 @@ public class ScaffoldImportanceSampling extends Command {
     public boolean stoppingCondition(double t, double path_probability)
     {
 		// path_probability currently not used
-	//if ((t > TMAX) || indicatorFunction())
-	if (indicatorFunction())
-	    return true;
-	return false;
+		//if ((t > TMAX) || indicatorFunction())
+		if (indicatorFunction())
+			return true;
+		return false;
     }
 
     public double boundedTimeProbability(double mu, double sigma) 
     { 
-	return CNDF((TMAX-mu)/sigma);
+		return CNDF((TMAX-mu)/sigma);
     }
 
 
     public boolean indicatorFunction()
     {
-	Integer state = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-	if (state == target)
-	    return true;
-	else
-	    return false;
+		Integer state = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+		if (state == target)
+			return true;
+		else
+			return false;
     }
 
-    int getTarget(int idx) 
+    int getTarget(int idx) throws PrismException
     {
-	try {
-	    return Integer.parseInt(sim.computeTransitionTarget(idx).toStringNoParentheses());
-	}
-	catch (PrismException e) {
-	    System.out.println("Error: " + e.getMessage());
-	    System.exit(1);
-	    return 0;
-	}
+		return Integer.parseInt(sim.computeTransitionTarget(idx).toStringNoParentheses());
     }
 
     int getState(int idx) 
     {
-	return Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-	
+		return Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
     }
 
 
     int makeTransition(double modified_total_rate,int numTransitions,List<Double> transitionRates)
+		throws PrismException
     {
-	////////////////////////////////////////////////////
-	// Execute the transition:
-	////////////////////////////////////////////////////
+		////////////////////////////////////////////////////
+		// Execute the transition:
+		////////////////////////////////////////////////////
 	    double x = rng.randomUnifDouble(modified_total_rate);
 	    
 	    double tot    = 0.0;
@@ -288,153 +276,145 @@ public class ScaffoldImportanceSampling extends Command {
 	    }
 	    offset--;
 	    
-	try {
-	    sim.manualTransition(offset);
-
-	}
-	catch (PrismException e) {
-	    System.out.println("Error: " + e.getMessage());
-	    System.exit(1);
-	}
-	return offset;
+		sim.manualTransition(offset);
+		return offset;
     }
 
 
-    // returns the cumulative normal distribution function (CNDF)
-    // for a standard normal: N(0,1)
+    /**
+	 * Returns the cumulative normal distribution function (CNDF)
+	 * for a standard normal: N(0,1)
+	 */
     double CNDF(double x)
     {
-	int neg = (x < 0d) ? 1 : 0;
-	if ( neg == 1) 
-	    x *= -1d;
+		int neg = (x < 0d) ? 1 : 0;
+		if ( neg == 1) 
+			x *= -1d;
 
-	double k = (1d / ( 1d + 0.2316419 * x));
-	double y = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
-		     k - 0.356563782) * k + 0.319381530) * k;
-	y = 1.0 - 0.398942280401 * Math.exp(-0.5 * x * x) * y;
+		double k = (1d / ( 1d + 0.2316419 * x));
+		double y = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
+				k - 0.356563782) * k + 0.319381530) * k;
+		y = 1.0 - 0.398942280401 * Math.exp(-0.5 * x * x) * y;
 
-	return (1d - neg) * y + neg * (1d - y);
+		return (1d - neg) * y + neg * (1d - y);
     }
 
 
-    public double run()
+	/**
+	 * ABSTRACT generalization:
+	 *   1. initialize the path, then step time
+	 *   2. loop over all transitions from current state, detect catalog inclusion 
+	 *      -> check conditions to add state into the catalog
+	 *   3. apply rate enhancements (THIS NEEDS A CUSTOM TRANSITION)
+	 *   4. (?) check conditions to include in catalog (?)
+	 *   5. check stopping conditions
+	 * @return Path probability
+	 * @throws PrismException
+	 */
+    public double simulate() throws PrismException
     {
-		try {
-			sim.createNewPath();
-			sim.initialisePath(null);
+		sim.createNewPath();
+		sim.initialisePath(null);
 
-			double path_probability     = 1.0;
-			double modified_probability = 1.0;
-			double total_rate           = 0.0;
-			double modified_total_rate  = 0.0;
+		double path_probability     = 1.0;
+		double modified_probability = 1.0;
+		double total_rate           = 0.0;
+		double modified_total_rate  = 0.0;
 
-			List<Integer> visitedStates = new ArrayList<>();
+		List<Integer> visitedStates = new ArrayList<>();
+		
+		double mu     = 0;
+		double sigma2 = 0;
+
+		// Simulate a path step-by-step:
+		//int tdx = 0;
+		do {
+			//for (int tdx= 0; !stoppingCondition(sim.getTotalTimeForPath(),path_probability); tdx++) {
+			// Initialize variables:
+			total_rate          = 0.0; 
+			modified_total_rate = 0.0;
+
+			// Loop through the possible transitions from the current state:
+			Integer   numTransitions  = sim.getNumTransitions();
+			List<Double> transitionRates = new ArrayList<>(numTransitions);
+			List<Double> nativeRates     = new ArrayList<>(numTransitions);
+			Integer   currentState    = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
 			
-			double mu     = 0;
-			double sigma2 = 0;
+			if (visitedStates.indexOf(currentState) == -1)
+				visitedStates.add(currentState);
 
-			// Simulate a path step-by-step:
-			int tdx = 0;
-			do {
-			    //for (int tdx= 0; !stoppingCondition(sim.getTotalTimeForPath(),path_probability); tdx++) {
-				// Initialize variables:
-				total_rate          = 0.0; 
-				modified_total_rate = 0.0;
-
-				// Loop through the possible transitions from the current state:
-				Integer   numTransitions  = sim.getNumTransitions();
-				List<Double> transitionRates = new ArrayList<>(numTransitions);
-				List<Double> nativeRates     = new ArrayList<>(numTransitions);
-				Integer   currentState    = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+			if (numTransitions > 0) {			
+				//++++++++++++++++++++++++++++++++++++++++++++++++++++
+				// Adjust Transition Rates 			
+				//++++++++++++++++++++++++++++++++++++++++++++++++++++
+				for (int idx=0; idx<numTransitions; idx++) { 
+				// Get target state of the indexed transition:
+				Integer transitionTarget = getTarget(idx);
+				if (satisfyCatalogCondition(currentState,transitionTarget, sim.getTransitionProbability(idx)))
+					addToCatalog(currentState);
 				
-				if (visitedStates.indexOf(currentState) == -1)
-					visitedStates.add(currentState);
+				transitionRates.add(sim.getTransitionProbability(idx));
+				nativeRates.add(sim.getTransitionProbability(idx));
+				total_rate += (double) sim.getTransitionProbability(idx);
+				
+				Boolean alreadyVisited = (visitedStates.indexOf(transitionTarget) > -1);
+				if (inCatalog(transitionTarget) && !alreadyVisited) { 
+					transitionRates.set(idx, (double)transitionRates.get(idx));
+				}
+				else 
+					transitionRates.set(idx, (M)*(double)transitionRates.get(idx));
+				
+				modified_total_rate += (double) transitionRates.get(idx);
+				}
+				//++++++++++++++++++++++++++++++++++++++++++++++++++++
+				
+				int offset = makeTransition(modified_total_rate,numTransitions,transitionRates);
 
-				if (numTransitions > 0) {			
-				    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-				    // Adjust Transition Rates 			
-				    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-				    for (int idx=0; idx<numTransitions; idx++) { 
-					// Get target state of the indexed transition:
-					Integer transitionTarget = getTarget(idx);
-					if (satisfyCatalogCondition(currentState,transitionTarget, sim.getTransitionProbability(idx)))
-					    addToCatalog(currentState);
-					
-					transitionRates.add(sim.getTransitionProbability(idx));
-					nativeRates.add(sim.getTransitionProbability(idx));
-					total_rate += (double) sim.getTransitionProbability(idx);
-					
-					Boolean alreadyVisited = (visitedStates.indexOf(transitionTarget) > -1);
-					if (inCatalog(transitionTarget) && !alreadyVisited) { 
-					    transitionRates.set(idx, (double)transitionRates.get(idx));
+				// Accumulate path probability:
+				mu += 1.0/nativeRates.get(offset);
+				sigma2 += mu*mu;
+
+				double p_transition   = (double)nativeRates.get(offset)/total_rate; 
+				path_probability     *= p_transition;
+				double p_modified     = (double)transitionRates.get(offset)/modified_total_rate;
+				modified_probability *= p_modified;
+				
+				Integer transitionTarget = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+				logger.trace(transitionTarget+"("+transitionRates.get(offset)+"),t="+sim.getTotalTimeForPath());
+				if (transitionTarget == 0)
+				return 0;
+			}
+			
+			else
+			{
+				//if (sim.getTotalTimeForPath() > TMAX)
+				//	    return 0;
+				//					else 
+				if (indicatorFunction()) {
+					logger.trace("="+path_probability+"/"+modified_probability+"="+(path_probability/modified_probability)+"\n");
+					for (int i=0; i<visitedStates.size(); i++) {
+					addToCatalog((Integer)visitedStates.get(i));
 					}
-					else 
-					    transitionRates.set(idx, (M)*(double)transitionRates.get(idx));
-					
-					modified_total_rate += (double) transitionRates.get(idx);
-				    }
-				    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-				    
-				    int offset = makeTransition(modified_total_rate,numTransitions,transitionRates);
 
-				    // Accumulate path probability:
-				    mu += 1.0/nativeRates.get(offset);
-				    sigma2 += mu*mu;
-
-				    double p_transition   = (double)nativeRates.get(offset)/total_rate; 
-				    path_probability     *= p_transition;
-				    double p_modified     = (double)transitionRates.get(offset)/modified_total_rate;
-				    modified_probability *= p_modified;
-				    
-				    Integer transitionTarget = Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-				    logger.trace(transitionTarget+"("+transitionRates.get(offset)+"),t="+sim.getTotalTimeForPath());
-				    if (transitionTarget == 0)
+					return (path_probability/modified_probability)*boundedTimeProbability(mu, Math.sqrt(sigma2)); 
+				}
+				else {
+					logger.trace("=0\n");
 					return 0;
 				}
-				
-				else
-				{
-				    //if (sim.getTotalTimeForPath() > TMAX)
-				    //	    return 0;
-				    //					else 
-				    if (indicatorFunction()) {
-					    logger.trace("="+path_probability+"/"+modified_probability+"="+(path_probability/modified_probability)+"\n");
-					    for (int i=0; i<visitedStates.size(); i++) {
-						addToCatalog((Integer)visitedStates.get(i));
-					    }
-
-					    return (path_probability/modified_probability)*boundedTimeProbability(mu, Math.sqrt(sigma2)); 
-					}
-					else {
-					    logger.trace("=0\n");
-					    return 0;
-					}
-				}
-				/* ABSTRACT generalization:
-				1. initialize the path, then step time
-				2. loop over all transitions from current state, detect catalog inclusion 
-				-> check conditions to add state into the catalog
-				3. apply rate enhancements (THIS NEEDS A CUSTOM TRANSITION)
-				4. (?) check conditions to include in catalog (?)
-				5. check stopping conditions
-				*/
-				
-			} while (!stoppingCondition(sim.getTotalTimeForPath(),path_probability));
-
-			if (indicatorFunction()) {
-			    logger.trace("="+path_probability+"/"+modified_probability+"="+(path_probability/modified_probability)+"\n");
-			    return path_probability/modified_probability*boundedTimeProbability(mu, Math.sqrt(sigma2));
 			}
-			else {
-			    logger.trace("=0\n");
-			    return 0;
-			}
+			
+		} while (!stoppingCondition(sim.getTotalTimeForPath(),path_probability));
 
-		} 
-		catch (PrismException e) {
-			System.out.println("Error: " + e.getMessage());
-			System.exit(1);
+		if (indicatorFunction()) {
+			logger.trace("="+path_probability+"/"+modified_probability+"="+(path_probability/modified_probability)+"\n");
+			return path_probability/modified_probability*boundedTimeProbability(mu, Math.sqrt(sigma2));
 		}
-		return 0;
+		else {
+			logger.trace("=0\n");
+			return 0;
+		}
 	}
+
+
 }
