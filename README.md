@@ -199,6 +199,7 @@ public class MyClass extends Command {
             logger.trace("Iteration " + i);
         }
         logger.warn("This class does nothing. Why are using it?");
+        logger.log(Main.LOG_ALWAYS, "Example MyClass completed successfully");
     }
 
 }
@@ -206,8 +207,8 @@ public class MyClass extends Command {
 
 | Log Level | Audience | Description | Integer Value |
 | --- | --- | --- | --- |
-| `OFF` |  | Logging is completely off | 0 |
-| `FATAL` |  | Really bad stuff | 100 |
+| `ALWAYS` | | Result or data output. Usage: `logger.log(Main.LOG_ALWAYS, msg)` | 0 |
+| `FATAL` |  | Use `ERROR` instead | 100 |
 | `ERROR` | | Something is broken and needs fixing immediately | 200 |
 | `WARN` | | Something isn't right, but the application can still work | 300 |
 | `INFO` | Everyone | Basic information about the program (requires `-v` option) | 400 |

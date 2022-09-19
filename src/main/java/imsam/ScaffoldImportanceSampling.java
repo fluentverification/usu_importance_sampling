@@ -130,14 +130,16 @@ public class ScaffoldImportanceSampling extends Command {
 		}
 		double variance = squareSum/((double)Nruns*((double)Nruns-1));
 		if (raw) {
-			logger.info(mean + "\t" +
+			logger.log(Main.LOG_ALWAYS,
+						mean + "\t" +
 						variance + "\t" +
 						binarySum + "\t" +
 						importanceSampleRate + "\t" +
 						argsRawToString());
 		}
 		else {
-		    logger.info("Probability to reach final state: " + mean +
+		    logger.log(Main.LOG_ALWAYS,
+						"Probability to reach final state: " + mean +
 						", Variance " + variance +
 						", non-zero samples "+ binarySum +
 						", useful sample rate " + importanceSampleRate +

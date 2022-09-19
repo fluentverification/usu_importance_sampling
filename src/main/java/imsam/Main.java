@@ -31,6 +31,7 @@ public class Main extends Command {
      * usually use `Main.getLogger()` and have their own.
      */
     public static final Logger logger = loggerContext.getRootLogger();
+    public static final Level LOG_ALWAYS = Level.forName("ALWAYS", 0);
 
     public static final Main main = new Main();       // This looks weird, but an instance of the class is required by args4j
 
@@ -129,6 +130,7 @@ public class Main extends Command {
         rootLoggerConfig.removeAppender("STDOUT");
         rootLoggerConfig.addAppender(stdout, Level.ERROR, filter);
         loggerContext.updateLoggers();
+        logger.info("Set STDOUT log level to ERROR");
     }
 
 
