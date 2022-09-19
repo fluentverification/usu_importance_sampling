@@ -4,7 +4,7 @@
 //
 // Chris Winstead, Utah State University
 //
-// Based on PRISM API demoo "SimulateModel". The original file header is
+// Based on PRISM API demo "SimulateModel". The original file header is
 // included below this line.
 //
 //==============================================================================
@@ -35,14 +35,12 @@
 
 package imsam;  // Importance Sampling package
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import parser.Values;
-import parser.ast.Expression;
 import parser.ast.ModulesFile;
 import prism.Prism;
 import prism.PrismDevNullLog;
@@ -75,7 +73,7 @@ public class runPath
 			PrismLog mainLog = new PrismDevNullLog();
 			//PrismLog mainLog = new PrismFileLog("stdout");
 
-			// Initialise PRISM engine 
+			// Initialize PRISM engine 
 			Prism prism = new Prism(mainLog);
 			prism.initialise();
 
@@ -92,6 +90,7 @@ public class runPath
 			String x;
 			
 			x=br.readLine(); 
+			br.close();
 			
 
 			String[] tr_st=x.split("\\s+"); 

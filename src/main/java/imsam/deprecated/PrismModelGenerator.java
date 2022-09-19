@@ -1,4 +1,4 @@
-package imsam;
+package imsam.deprecated;
 
 import java.util.Scanner;
 import java.lang.Math;

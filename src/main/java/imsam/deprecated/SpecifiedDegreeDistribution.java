@@ -9,12 +9,9 @@ and will randomly choose based on the uniformly distributed Math.random() accord
 probabilities.
 
 */
-package imsam;
+package imsam.deprecated;
 
 import java.util.ArrayList;
-import java.lang.IllegalArgumentException;
-import java.lang.Exception;
-import java.lang.Math;
 
 /**
  * Simple pair class which contains items of two different types
