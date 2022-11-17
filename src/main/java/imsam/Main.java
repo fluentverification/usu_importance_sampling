@@ -42,6 +42,7 @@ public class Main extends Command {
     @SubCommands({
         @SubCommand(name="mgen",impl=MGenCommand.class),
         @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
+        @SubCommand(name="dbwSSA",impl=DynamicBinaryWeightedSSA.class),
     })
     protected Command command;
 

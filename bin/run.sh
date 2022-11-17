@@ -36,4 +36,5 @@ if [ "$PRISM_JAVA" = "" ]; then
 fi
 
 # Run PRISM through Java
-"$PRISM_JAVA" -Djava.library.path="$PRISM_LIB_PATH" -classpath "$PRISM_CLASSPATH" "$PRISM_MAINCLASS" "$@"
+# grep used to suppress warning message from log4j
+"$PRISM_JAVA" -Djava.library.path="$PRISM_LIB_PATH" -classpath "$PRISM_CLASSPATH" "$PRISM_MAINCLASS" "$@" | grep -v "getCallerClass"
