@@ -20,9 +20,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;//ArrayList;
+//import java.util.List;
+//import java.util.Dictionary;
+//import java.util.NoSuchElementException;
 import java.lang.Math;
 
 import org.apache.logging.log4j.Logger;
@@ -92,7 +93,7 @@ public class DynamicBinaryWeightedSSA extends Command {
     private int               constraintIndex;
     private int               objectiveIndex;
     private RandomNumberGenerator rng = new RandomNumberGenerator();
-
+    private Dictionary        predilections = new Hashtable();
 
 	@Override
 	public int exec() throws IOException, PrismException {
@@ -100,6 +101,8 @@ public class DynamicBinaryWeightedSSA extends Command {
 		logger.debug("Running Dynamic Binary Weighted SSA");
 
 		loadModel();
+		Double d=1e20;
+		predilections.put("[r3]",d);
 
 		double sum       = 0.0;
 		long   binarySum = 0;
@@ -314,7 +317,17 @@ public class DynamicBinaryWeightedSSA extends Command {
 
 				if (constraintSatisfied)
 				    {
-					transitionRates.add(sim.getTransitionProbability(idx));
+					double r=sim.getTransitionProbability(idx);
+					String s = sim.getTransitionActionString(idx);
+					if (s !=null) {
+					    logger.trace("action label " + s);
+					    Double delta = (Double) predilections.get(s);
+					    if (delta != null) {
+						r=r*delta;
+						logger.trace("predilection " + delta);
+					    }
+					}
+					transitionRates.add(r);
 				    }
 				else
 				    {

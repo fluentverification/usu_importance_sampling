@@ -12,9 +12,9 @@ module RXN
     b : [0..maxSpecies] init 0;
     c : [0..maxSpecies] init 0;
    
-    [] (a<=maxSpecies) -> k1:(a'=a+1);
-    [] (b<=maxSpecies) -> k2:(b'=b+1);
-    [] (a>0) & (b>0) & (c<=maxSpecies) -> a*b*k3:(c'=c+1) & (b'=b-1) & (a'=a-1);
+    [r1] (a<maxSpecies) -> k1:(a'=a+1);
+    [r2] (b<maxSpecies) -> k2:(b'=b+1);
+    [r3] (a>0) & (b>0) & (c<maxSpecies) -> a*b*k3:(c'=c+1) & (b'=b-1) & (a'=a-1);
 endmodule
 
 label "objective" = a=0 & b=0 & c=2; 
