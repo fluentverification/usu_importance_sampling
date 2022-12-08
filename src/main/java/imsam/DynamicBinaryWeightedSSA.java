@@ -15,29 +15,24 @@
 
 package imsam;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;//ArrayList;
-//import java.util.List;
-//import java.util.Dictionary;
-//import java.util.NoSuchElementException;
-import java.lang.Math;
+//ArrayList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Option;
 
-import parser.ast.ModulesFile;
 import parser.Values;
-
+import parser.ast.ModulesFile;
+import prism.ModelGenerator;
 import prism.Prism;
 import prism.PrismDevNullLog;
 import prism.PrismException;
 import prism.PrismLog;
-import prism.ModelGenerator;
-
 import simulator.RandomNumberGenerator;
 import simulator.SimulatorEngine;
 
@@ -74,8 +69,11 @@ public class DynamicBinaryWeightedSSA extends Command {
 	@Option(name="--const",usage="Model constant name=value")
 	public String modelConstant = "";
 
+	@Option(name="--weight",usage="TODO: needs description")
+	public Map<String,Double> predilections = Map.of("[r3]", 1e20);
+
 	public String argsToString() {
-		return String.format("TMAX=%f Nruns=%d modelFile=%s ", TMAX, Nruns, modelFileName);
+		return String.format("TMAX=%f Nruns=%d modelFile=%s weights=%s", TMAX, Nruns, modelFileName, predilections);
 	}
 	public String argsRawToString() {
 		return String.format("%f\t%d", TMAX, Nruns);
@@ -90,10 +88,9 @@ public class DynamicBinaryWeightedSSA extends Command {
     public SimulatorEngine    sim;
     public ModelGenerator     info;
     
-    private int               constraintIndex;
-    private int               objectiveIndex;
+    //private int               constraintIndex;
+    //private int               objectiveIndex;
     private RandomNumberGenerator rng = new RandomNumberGenerator();
-    private Dictionary        predilections = new Hashtable();
 
 	@Override
 	public int exec() throws IOException, PrismException {
@@ -101,8 +98,6 @@ public class DynamicBinaryWeightedSSA extends Command {
 		logger.debug("Running Dynamic Binary Weighted SSA");
 
 		loadModel();
-		Double d=1e20;
-		predilections.put("[r3]",d);
 
 		double sum       = 0.0;
 		long   binarySum = 0;
