@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Option;
 
+import imsam.args4j.MapDoubleOptionHandler;
 import parser.Values;
 import parser.ast.ModulesFile;
 import prism.ModelGenerator;
@@ -69,7 +70,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 	@Option(name="--const",usage="Model constant name=value")
 	public String modelConstant = "";
 
-	@Option(name="--weight",usage="TODO: needs description")
+	@Option(name="--weight",usage="TODO: needs description",handler=MapDoubleOptionHandler.class)
 	public Map<String,Double> predilections = Map.of("[r3]", 1e20);
 
 	public String argsToString() {
