@@ -12,15 +12,15 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.opentest4j.AssertionFailedError;
 
-public class MultiMapOptionHandlerTest {
+public class Test_MultiMapOptionHandler {
 
-    protected class TestClass<K,V> {
+    protected class TestClass {
         @Option(name="--dict", metaVar="dict", handler=MultiMapOptionHandler.class)
-        public Map<K,V> dictionary = new HashMap<>();
+        public Map<String,String> dictionary = new HashMap<>();
     }
 
-    protected <K,V> Map<K,V> parse(String[] args) throws CmdLineException {
-        TestClass<K,V> testClass = new TestClass<>();
+    protected Map<String,String> parse(String[] args) throws CmdLineException {
+        TestClass testClass = new TestClass();
         CmdLineParser parser = new CmdLineParser(testClass);
         parser.parseArgument(args);
         return testClass.dictionary;

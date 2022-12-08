@@ -1,5 +1,7 @@
 package imsam;
 
+import java.util.stream.Stream;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,7 +13,6 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
@@ -95,14 +96,10 @@ public class Main extends Command {
     private static void _printUsage(CmdLineParser parser, boolean includeSubcommand) {
         System.err.println("Usage:");
         System.err.print(" ./bin/run.sh");
-        for (OptionHandler arg : Main.parser.getArguments()) {
-            System.err.print(" " + arg.getDefaultMetaVariable());
-        }
-        if (includeSubcommand) {
-            for (OptionHandler arg : parser.getArguments()) {
-                System.err.print(" " + arg.getDefaultMetaVariable());
-            }
-        }
+        Stream.concat(
+            Main.parser.getArguments().stream(),
+            parser.getArguments().stream()
+        ).forEachOrdered(opt -> System.err.print(" "+opt.getDefaultMetaVariable()));
         System.err.println(" [OPTIONS]...\n");
         parser.printUsage(System.err);
     }
