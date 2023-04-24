@@ -1,0 +1,17 @@
+P=? [ true U[0,60000] ((!valid) & (!ack) & (!done) & (!rdy)) ]; //0000//
+P=? [ true U[0,60000] ((!valid) & (!ack) & (!done) & (rdy)) ]; //0001//
+P=? [ true U[0,60000] ((!valid) & (!ack) & (done) & (!rdy)) ]; //0010//
+P=? [ true U[0,60000] ((!valid) & (!ack) & (done) & (rdy)) ]; //0011//
+P=? [ true U[0,60000] ((!valid) & (ack) & (!done) & (!rdy)) ]; //0100//
+P=? [ true U[0,60000] ((!valid) & (ack) & (!done) & (rdy)) ]; //0101//
+P=? [ true U[0,60000] ((!valid) & (ack) & (done) & (!rdy)) ]; //0110//
+P=? [ true U[0,60000] ((!valid) & (ack) & (done) & (rdy)) ]; //0111//
+P=? [ true U[0,60000] ((valid) & (!ack) & (!done) & (!rdy)) ]; //1000//
+P=? [ true U[0,60000] ((valid) & (!ack) & (!done) & (rdy)) ]; //1001//
+P=? [ true U[0,60000] ((valid) & (!ack) & (done) & (!rdy)) ]; //1010//
+P=? [ true U[0,60000] ((valid) & (!ack) & (done) & (rdy)) ]; //1011//
+P=? [ true U[0,60000] ((valid) & (ack) & (!done) & (!rdy)) ]; //1100//
+P=? [ true U[0,60000] ((valid) & (ack) & (!done) & (rdy)) ]; //1101//
+P=? [ true U[0,60000] ((valid) & (ack) & (done) & (!rdy)) ]; //1110//
+P=? [ true U[0,60000] ((valid) & (ack) & (done) & (rdy)) ]; //1111//
+
