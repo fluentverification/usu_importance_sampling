@@ -207,18 +207,19 @@ public class DynamicBinaryWeightedSSA extends Command {
 	String getState(int idx) {
 		return sim.getCurrentState().toStringNoParentheses();
 	}
-	
-	/*Thomas Prouty contribution, for Senior Project */
-	int moduloWeight(ArrayList<Double> dwellTimes, double T, int Nsample) {
-		double[][] variableSet = new double[dwellTimes.length][Nsamples];
-		double[][] samples = new double[dwellTimes.length][Nsamples];
+
+	/* Thomas Prouty contribution, for Senior Project */
+	double moduloWeight(ArrayList<Double> dwellTimes, double T, int Nsamples) {
+		double[][] variableSet = new double[dwellTimes.size()][Nsamples];
+		double[][] samples = new double[dwellTimes.size()][Nsamples];
 
 		// Use java.util.Random for faster random number generation
 		Random random = new Random();
-		for (int k = 0; k < dwellTime.length; k++) {
-			if (dwellTime[k] != 0) {
+		for (int k = 0; k < dwellTimes.size(); k++) {
+			final double dwellTime = dwellTimes.get(k);
+			if (dwellTimes.get(k) != 0) {
 				// Use parallel streams for faster summing of arrays
-				Arrays.parallelSetAll(variableSet[k], i -> Math.exp(-dwellTime[k] * random.nextDouble()));
+				Arrays.parallelSetAll(variableSet[k], i -> Math.exp(-dwellTime * random.nextDouble()));
 			} else {
 				Arrays.fill(variableSet[k], 0);
 			}
@@ -226,9 +227,9 @@ public class DynamicBinaryWeightedSSA extends Command {
 
 		// Use a single loop to calculate pathSet and stuff
 		double num = 1.0;
-		double[] pathSet = new double[dwellTimes.length];
-		double[] stuff = new double[dwellTimes.length];
-		for (int i = 0; i < dwellTimes.length; i++) {
+		double[] pathSet = new double[dwellTimes.size()];
+		double[] stuff = new double[dwellTimes.size()];
+		for (int i = 0; i < dwellTimes.size(); i++) {
 			for (int j = 0; j < Nsamples; j++) {
 				double sample = variableSet[i][j] % T;
 				samples[i][j] = sample;
@@ -236,7 +237,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 			}
 			stuff[i] = Arrays.stream(variableSet[i]).sum();
 			if (stuff[i] <= T) {
-				num *= (1 - Math.exp(-T / dwellTime[i]));
+				num *= (1 - Math.exp(-T / dwellTimes.get(i)));
 			}
 		}
 
@@ -298,11 +299,14 @@ public class DynamicBinaryWeightedSSA extends Command {
 		double modified_probability = 1.0;
 		double total_rate = 0.0;
 		double modified_total_rate = 0.0;
-        
+
 		int step = 0;
 
 		double mu = 0;
 		double sigma2 = 0;
+
+		ArrayList<Double> dwellTimes = new ArrayList<>();
+		boolean useModulo = true;
 
 		// Simulate a path step-by-step:
 		// int tdx = 0;
@@ -317,7 +321,6 @@ public class DynamicBinaryWeightedSSA extends Command {
 			Integer numTransitions = sim.getNumTransitions();
 			List<Double> transitionRates = new ArrayList<>(numTransitions);
 			List<Double> nativeRates = new ArrayList<>(numTransitions);
-			ArrayList<Double> dwellTimes = new ArrayList<>();
 			// Integer currentState =
 			// Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
 
@@ -352,16 +355,14 @@ public class DynamicBinaryWeightedSSA extends Command {
 						transitionRates.add(0.0);
 					}
 
-
 					nativeRates.add(sim.getTransitionProbability(idx));
 					total_rate += (double) sim.getTransitionProbability(idx);
 
-					dwellTimes.add(1.0/total_rate);
+					dwellTimes.add(1.0 / total_rate);
 
 					modified_total_rate += (double) transitionRates.get(idx);
 				}
 				// ++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 
 				int offset = makeTransition(modified_total_rate, numTransitions, transitionRates);
 				step++;
@@ -386,6 +387,13 @@ public class DynamicBinaryWeightedSSA extends Command {
 				// return 0;
 				// else
 				if (indicatorFunction()) {
+					if (useModulo) {
+						double mWeight = moduloWeight(dwellTimes, 20, 10000);
+						dwellTimes.clear();
+						logger.trace("=" + path_probability + "/" + modified_probability + "*" + mWeight + "="
+								+ (path_probability / modified_probability) + "\n");
+						return path_probability / modified_probability * mWeight;
+					}
 					logger.trace("=" + path_probability + "/" + modified_probability + "="
 							+ (path_probability / modified_probability) + "\n");
 					return path_probability / modified_probability;
@@ -397,15 +405,12 @@ public class DynamicBinaryWeightedSSA extends Command {
 
 		} while (!stoppingCondition(sim.getTotalTimeForPath(), path_probability));
 
-		double mWeight = moduloWeight(dwellTimes, 20, 10000);
-		boolean useModulo = true;
-
-		dwellTimes.clear();
-
 		if (indicatorFunction()) {
-			if(useModulo){
+			if (useModulo) {
+				double mWeight = moduloWeight(dwellTimes, 20, 10000);
+				dwellTimes.clear();
 				logger.trace("=" + path_probability + "/" + modified_probability + "*" + mWeight + "="
-					+ (path_probability / modified_probability) + "\n");
+						+ (path_probability / modified_probability) + "\n");
 				return path_probability / modified_probability * mWeight;
 			}
 			logger.trace("=" + path_probability + "/" + modified_probability + "="
