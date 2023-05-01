@@ -58,10 +58,10 @@ public class DynamicBinaryWeightedSSA extends Command {
 	// CLI Arguments
 
 	@Option(name = "--Tmax", usage = "Maximum transitions before truncating")
-	public double TMAX = 10;
+	public double TMAX = 1000;
 
 	@Option(name = "--Nruns", usage = "Number of stochastic runs")
-	public int Nruns = 1;
+	public int Nruns = 1000;
 
 	@Option(name = "--raw", usage = "Print raw output values")
 	public boolean raw = false;
@@ -306,7 +306,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 		double sigma2 = 0;
 
 		ArrayList<Double> dwellTimes = new ArrayList<>();
-		boolean useModulo = true;
+		boolean useModulo = false;
 
 		// Simulate a path step-by-step:
 		// int tdx = 0;
