@@ -66,3 +66,8 @@ ack: bool init false;
 
 
 endmodule 
+
+const int maxConstraint;
+
+label "objective" = done=true;
+label "constraint" = (valid) & (ack) & (done) & (!rdy);
