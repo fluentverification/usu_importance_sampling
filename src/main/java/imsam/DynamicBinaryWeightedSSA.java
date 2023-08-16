@@ -20,10 +20,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
+
 import java.util.*;//ArrayList;
 //import java.util.List;
 //import java.util.Dictionary;
 //import java.util.NoSuchElementException;
+
 import java.lang.Math;
 
 import org.apache.logging.log4j.Logger;
@@ -33,7 +36,8 @@ import parser.ast.ModulesFile;
 import parser.Values;
 
 import prism.Prism;
-import prism.PrismDevNullLog;
+//import prism.PrismDevNullLog;
+import prism.PrismPrintStreamLog;
 import prism.PrismException;
 import prism.PrismLog;
 import prism.ModelGenerator;
@@ -53,6 +57,8 @@ import simulator.SimulatorEngine;
 public class DynamicBinaryWeightedSSA extends Command {
 
 	final static Logger logger = Main.getLogger(DynamicBinaryWeightedSSA.class);
+    PrintStream prismStream; //= new PrintStream("prism.log");
+    PrismPrintStreamLog prismLog; //= new PrismPrintStreamLog(prismStream);
 
 	//////////////////////////////////////////////////
 	// CLI Arguments
@@ -65,6 +71,12 @@ public class DynamicBinaryWeightedSSA extends Command {
 
 	@Option(name = "--raw", usage = "Print raw output values")
 	public boolean raw = false;
+
+	@Option(name = "--modulo", usage = "Use 'modulo' heuristic")
+	public boolean useModulo = false;
+
+    	@Option(name = "--numModuloSamples", usage = "Number of samples to compute 'modulo' heuristic")
+	public int numModuloSamples = 1000;
 
 	@Option(name = "--model", metaVar = "FILENAME", usage = "Prism model file name")
 	public String modelFileName = "models/three_rxn.pm";
@@ -83,7 +95,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 	// end CLI Arguments
 	//////////////////////////////////////////////////
 
-	public PrismLog prismLog;
+    //	public PrismLog prismLog;
 	public Prism prism;
 	public SimulatorEngine sim;
 	public ModelGenerator info;
@@ -99,11 +111,9 @@ public class DynamicBinaryWeightedSSA extends Command {
 		logger.debug("Running Dynamic Binary Weighted SSA");
 
 		loadModel();
-		Double d = 1e20;
-		predilections.put("[r3]", d);
 
-		double sum = 0.0;
-		long binarySum = 0;
+		double sum       = 0.0;
+		long   binarySum = 0;
 		double squareSum = 0.0;
 
 		List<Double> samples = new ArrayList<>(Nruns);
@@ -114,13 +124,12 @@ public class DynamicBinaryWeightedSSA extends Command {
 				binarySum++;
 
 			samples.add(sample);
-			logger.debug(sim.getPath());
 			logger.debug("=================");
 		}
 
 		prism.closeDown();
 
-		double mean = sum / (double) Nruns;
+		double mean = (double) sum / (double) Nruns;
 		double importanceSampleRate = (double) binarySum / Nruns;
 
 		for (int n = 0; n < Nruns; n++) {
@@ -148,14 +157,17 @@ public class DynamicBinaryWeightedSSA extends Command {
 
 	}
 
-	public void loadModel() throws IOException, PrismException {
+    public void loadModel() throws IOException, PrismException, FileNotFoundException {
 		try {
 			// System.out.println("Loading PRISM model from " + params.modelFileName);
 
 			// Create a log for PRISM output (hidden or stdout)
-			prismLog = new PrismDevNullLog();
-
+			//prismLog = new PrismDevNullLog();
+		    prismStream = new PrintStream("prism.log");
+		    prismLog    = new PrismPrintStreamLog(prismStream);
+		    prismLog.setVerbosityLevel(100);
 			// Initialize PRISM engine
+		        
 			prism = new Prism(prismLog);
 			prism.initialise();
 
@@ -187,16 +199,29 @@ public class DynamicBinaryWeightedSSA extends Command {
 	public boolean indicatorFunction() throws PrismException {
 		// Integer state =
 		// Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
-		if (info.isLabelTrue("objective"))
-			return true;
-		else
-			return false;
+	    if (info.isLabelTrue("objective")) {
+		logger.trace("Indicator satisfied");
+		return true;
+	    }
+	    else {
+		logger.trace("Objective NOT reached");
+		return false;
+	    }
 	}
 
 	public boolean stoppingCondition(double t, double path_probability) throws PrismException {
-		// path_probability currently not used
-		if ((t > TMAX) || indicatorFunction())
-			return true;
+	    // path_probability currently not used
+	    if ((t > TMAX) && !useModulo) {
+		logger.trace("Path time " + t + " exceeds " + TMAX);
+		return true;
+	    }
+	    if ((t > 100*TMAX) && useModulo) {
+		logger.trace("Path time " + t + " exceeds " + (100*TMAX));
+		return true;
+	    }
+	    if (indicatorFunction())
+		return true;
+	    else
 		return false;
 	}
 
@@ -208,43 +233,52 @@ public class DynamicBinaryWeightedSSA extends Command {
 		return sim.getCurrentState().toStringNoParentheses();
 	}
 
-	/* Thomas Prouty contribution, for Senior Project */
-	double moduloWeight(ArrayList<Double> dwellTimes, double T, int Nsamples) {
-		double[][] variableSet = new double[dwellTimes.size()][Nsamples];
-		double[][] samples = new double[dwellTimes.size()][Nsamples];
+    /* Thomas Prouty contribution, for Senior Project */
+    double moduloWeight(ArrayList<Double> dwellTimes) {
+	int pathLength = dwellTimes.size();
+	double[][] exponentialSamples = new double[pathLength][numModuloSamples];
+	double[][] moduloSamples      = new double[pathLength][numModuloSamples];
+	double[]   pathTimeSamples    = new double[numModuloSamples];
+	double[]   sampleWeight       = new double[numModuloSamples];
 
-		// Use java.util.Random for faster random number generation
-		Random random = new Random();
-		for (int k = 0; k < dwellTimes.size(); k++) {
-			final double dwellTime = dwellTimes.get(k);
-			if (dwellTimes.get(k) != 0) {
-				// Use parallel streams for faster summing of arrays
-				Arrays.parallelSetAll(variableSet[k], i -> Math.exp(-dwellTime * random.nextDouble()));
-			} else {
-				Arrays.fill(variableSet[k], 0);
-			}
+	logger.trace("Modulo: dwellTimes = " + dwellTimes.toString());
+	
+	Random random = new Random();
+
+	// Generate samples of transition delays along path with same dwell times:
+	for (int i = 0; i < pathLength; i++) {
+	    double dwellTime = dwellTimes.get(i);
+	    if (dwellTime != 0) {
+		for (int j = 0; j < numModuloSamples; j++) {
+		    exponentialSamples[i][j] = dwellTime*(-Math.log(1.0 - random.nextDouble()));
 		}
-
-		// Use a single loop to calculate pathSet and stuff
-		double num = 1.0;
-		double[] pathSet = new double[dwellTimes.size()];
-		double[] stuff = new double[dwellTimes.size()];
-		for (int i = 0; i < dwellTimes.size(); i++) {
-			for (int j = 0; j < Nsamples; j++) {
-				double sample = variableSet[i][j] % T;
-				samples[i][j] = sample;
-				pathSet[i] += sample;
-			}
-			stuff[i] = Arrays.stream(variableSet[i]).sum();
-			if (stuff[i] <= T) {
-				num *= (1 - Math.exp(-T / dwellTimes.get(i)));
-			}
-		}
-
-		// Use parallel streams for faster average calculation
-		double FinalWeight = Arrays.stream(pathSet).parallel().filter(p -> p <= T).count() * num / pathSet.length;
-		return FinalWeight;
+	    } else {
+		Arrays.fill(exponentialSamples[i], 0);
+	    }
 	}
+
+	// Compute the modulo samples and total path times for each path sample:
+	double totalWeight = 0.0;
+	for (int i = 0; i < numModuloSamples; i++) {
+	    pathTimeSamples[i] = 0;
+	    sampleWeight[i]    = 1.0;
+	    for (int j = 0; j < pathLength; j++) {
+		double dwellTime    = dwellTimes.get(j);
+		moduloSamples[j][i] = exponentialSamples[j][i] % TMAX;
+		pathTimeSamples[i] += moduloSamples[j][i];
+		double FX           = 1.0-Math.exp(-TMAX/dwellTime);
+		sampleWeight[i]    *= FX;
+		logger.trace("  dwellTime " + Double.toString(dwellTime) + " sample "
+			     + exponentialSamples[j][i] + " modulo " + TMAX + " = "
+			     + moduloSamples[j][i] + " FX " + FX);
+	    }
+	    if (pathTimeSamples[i] < TMAX)
+		totalWeight += sampleWeight[i];
+	}
+
+
+	return totalWeight/numModuloSamples;
+    }
 
 	int makeTransition(double modified_total_rate, int numTransitions, List<Double> transitionRates)
 			throws PrismException {
@@ -291,134 +325,122 @@ public class DynamicBinaryWeightedSSA extends Command {
 	 * @return Path probability
 	 * @throws PrismException
 	 */
-	public double simulate() throws PrismException {
-		sim.createNewPath();
-		sim.initialisePath(null);
+    public double simulate() throws PrismException {
+	sim.createNewPath();
+	sim.initialisePath(null);
 
-		double path_probability = 1.0;
-		double modified_probability = 1.0;
-		double total_rate = 0.0;
-		double modified_total_rate = 0.0;
+	double path_probability     = 1.0;
+	double modified_probability = 1.0;
+	double total_rate           = 0.0;
+	double modified_total_rate  = 0.0;
 
-		int step = 0;
+	int step      = 0;
 
-		double mu = 0;
-		double sigma2 = 0;
+	double mu     = 0;
+	double sigma2 = 0;
 
-		ArrayList<Double> dwellTimes = new ArrayList<>();
-		boolean useModulo = false;
+	ArrayList<Double> dwellTimes = new ArrayList<>();	
 
-		// Simulate a path step-by-step:
-		// int tdx = 0;
-		do {
-			// for (int tdx= 0;
-			// !stoppingCondition(sim.getTotalTimeForPath(),path_probability); tdx++) {
-			// Initialize variables:
-			total_rate = 0.0;
-			modified_total_rate = 0.0;
+	// Simulate a path step-by-step:
+	do {
+	    // Initialize variables:
+	    total_rate          = 0.0;
+	    modified_total_rate = 0.0;
 
-			// Loop through the possible transitions from the current state:
-			Integer numTransitions = sim.getNumTransitions();
-			List<Double> transitionRates = new ArrayList<>(numTransitions);
-			List<Double> nativeRates = new ArrayList<>(numTransitions);
-			// Integer currentState =
-			// Integer.parseInt(sim.getCurrentState().toStringNoParentheses());
+	    // Loop through the possible transitions from the current state:
+	    Integer      numTransitions  = sim.getNumTransitions();
+	    List<Double> transitionRates = new ArrayList<>(numTransitions);
+	    List<Double> nativeRates     = new ArrayList<>(numTransitions);
 
-			if (numTransitions > 0) {
-				// ++++++++++++++++++++++++++++++++++++++++++++++++++++
-				// Adjust Transition Rates
-				// ++++++++++++++++++++++++++++++++++++++++++++++++++++
-				logger.trace("------ Step " + step + " -----");
-				for (int idx = 0; idx < numTransitions; idx++) {
-					// Get target state of the indexed transition:
-					String transitionTarget = getTarget(idx);
-					logger.trace("  * transition " + idx + " to state " + transitionTarget);
 
-					sim.manualTransition(idx);
-					logger.trace("constraint query: " + info.isLabelTrue("constraint"));
-					Boolean constraintSatisfied = info.isLabelTrue("constraint");
-					sim.backtrackTo(step);
+	    if (numTransitions > 0) {
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++
+		// Adjust Transition Rates
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++
+		
+		for (int idx = 0; idx < numTransitions; idx++) {
+		    // Get target state of the indexed transition:
+		    String transitionTarget = getTarget(idx);
+		    
 
-					if (constraintSatisfied) {
-						double r = sim.getTransitionProbability(idx);
-						String s = sim.getTransitionActionString(idx);
-						if (s != null) {
-							logger.trace("action label " + s);
-							Double delta = (Double) predilections.get(s);
-							if (delta != null) {
-								r = r * delta;
-								logger.trace("predilection " + delta);
-							}
-						}
-						transitionRates.add(r);
-					} else {
-						transitionRates.add(0.0);
-					}
+		    // Explore transition and verify the user constraint:
+		    sim.manualTransition(idx);
+		    
+		    Boolean constraintSatisfied = info.isLabelTrue("constraint");
+		    sim.backtrackTo(step);
 
-					nativeRates.add(sim.getTransitionProbability(idx));
-					total_rate += (double) sim.getTransitionProbability(idx);
-
-					dwellTimes.add(1.0 / total_rate);
-
-					modified_total_rate += (double) transitionRates.get(idx);
-				}
-				// ++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-				int offset = makeTransition(modified_total_rate, numTransitions, transitionRates);
-				step++;
-
-				// Accumulate path probability:
-				mu += 1.0 / nativeRates.get(offset);
-				sigma2 += mu * mu;
-
-				double p_transition = (double) nativeRates.get(offset) / total_rate;
-				path_probability *= p_transition;
-				double p_modified = (double) transitionRates.get(offset) / modified_total_rate;
-				modified_probability *= p_modified;
-
-				String transitionTarget = sim.getCurrentState().toStringNoParentheses();
-				logger.trace(transitionTarget + "(" + transitionRates.get(offset) + "),t=" + sim.getTotalTimeForPath());
-				// if (transitionTarget == 0)
-				// return 0;
+		    // If satisfied, keep this transition and apply wSSA weights:
+		    if (constraintSatisfied) {
+			double r = sim.getTransitionProbability(idx);
+			String s = sim.getTransitionActionString(idx);
+			if (s != null) {
+			    
+			    Double delta = (Double) predilections.get(s);
+			    if (delta != null) {
+				r = r * delta;				
+			    }
 			}
+			transitionRates.add(r);
+		    } else {
+			// If constraint is violated in target state, suppress this edge:
+			transitionRates.add(0.0);
+		    }
 
-			else {
-				// if (sim.getTotalTimeForPath() > TMAX)
-				// return 0;
-				// else
-				if (indicatorFunction()) {
-					if (useModulo) {
-						double mWeight = moduloWeight(dwellTimes, 20, 10000);
-						dwellTimes.clear();
-						logger.trace("=" + path_probability + "/" + modified_probability + "*" + mWeight + "="
-								+ (path_probability / modified_probability) + "\n");
-						return path_probability / modified_probability * mWeight;
-					}
-					logger.trace("=" + path_probability + "/" + modified_probability + "="
-							+ (path_probability / modified_probability) + "\n");
-					return path_probability / modified_probability;
-				} else {
-					logger.trace("=0\n");
-					return 0;
-				}
-			}
-
-		} while (!stoppingCondition(sim.getTotalTimeForPath(), path_probability));
-
-		if (indicatorFunction()) {
-			if (useModulo) {
-				double mWeight = moduloWeight(dwellTimes, 20, 10000);
-				dwellTimes.clear();
-				logger.trace("=" + path_probability + "/" + modified_probability + "*" + mWeight + "="
-						+ (path_probability / modified_probability) + "\n");
-				return path_probability / modified_probability * mWeight;
-			}
-			logger.trace("=" + path_probability + "/" + modified_probability + "="
-					+ (path_probability / modified_probability) + "\n");
-			return path_probability / modified_probability;
-		} else {
-			logger.trace("=0\n");
-			return 0;
+		    // Accumulate native and modified transition rates:
+		    nativeRates.add(sim.getTransitionProbability(idx));
+		    total_rate += (double) sim.getTransitionProbability(idx);
+		    modified_total_rate += (double) transitionRates.get(idx);		    
 		}
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		// Add dwell time for this state:
+		dwellTimes.add(1.0 / total_rate);
+
+		int offset = makeTransition(modified_total_rate, numTransitions, transitionRates);
+		step++;
+
+		logger.trace(sim.getCurrentState().toString() + "\t" + Double.toString(sim.getTotalTimeForPath()));
+
+		// Accumulate path probability:
+		mu     += 1.0 / nativeRates.get(offset);
+		sigma2 += mu * mu;
+
+		double p_transition   = (double) nativeRates.get(offset) / total_rate;
+		path_probability     *= p_transition;
+		double p_modified     = (double) transitionRates.get(offset) / modified_total_rate;
+		modified_probability *= p_modified;
+
+		String transitionTarget = sim.getCurrentState().toStringNoParentheses();
+		
+	    }
+	    else {
+		if (indicatorFunction()) {
+		    double mWeight = 1.0;
+		    if (useModulo) 
+			mWeight = moduloWeight(dwellTimes);
+		    else if (sim.getTotalTimeForPath() > TMAX)
+			mWeight = 0.0;
+		    logger.trace("Sample path returning " + Double.toString(mWeight * path_probability / modified_probability));
+		    return mWeight * path_probability / modified_probability;
+		} else {
+		    logger.trace("Sample path returning 0"); 
+		    return 0;		    
+		}
+	    }
+
+	} while (!stoppingCondition(sim.getTotalTimeForPath(), path_probability));
+    
+	if (indicatorFunction()) {
+	    double mWeight = 1.0;
+	    if (useModulo) 
+		mWeight = moduloWeight(dwellTimes);
+	    else if (sim.getTotalTimeForPath() > TMAX)
+		mWeight = 0.0;
+	    logger.trace("Sample path returning " + Double.toString(mWeight * path_probability / modified_probability));
+	    return mWeight * path_probability / modified_probability;
+	} else {
+	    logger.trace("Sample path returning 0"); 
+	    return 0;
 	}
+    }
 }

@@ -1,11 +1,12 @@
 ctmc
 
 const double k1=1.0;
-const double k2=1.0;
-const double k3=0.001;
+const double k2=0.2;
+const double k3=0.05;
+const double T=1;
 
-const int maxSpecies=10;
-const int maxConstraint;
+const int maxSpecies=100;
+const int maxConstraint=100;
 
 module RXN
     a : [0..maxSpecies] init 0;
