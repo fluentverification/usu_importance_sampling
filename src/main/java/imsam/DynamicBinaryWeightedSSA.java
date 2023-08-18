@@ -75,6 +75,13 @@ public class DynamicBinaryWeightedSSA extends Command {
 	@Option(name = "--modulo", usage = "Use 'modulo' heuristic")
 	public boolean useModulo = false;
 
+    	@Option(name = "--rho", usage = "Stopping time parameter for 'modulo' heuristic.")
+	public double rho = 10;
+
+        @Option(name = "--gamma", usage = "Stretch parameter for 'modulo' heuristic.")
+	public double gamma = 100;
+
+    
     	@Option(name = "--numModuloSamples", usage = "Number of samples to compute 'modulo' heuristic")
 	public int numModuloSamples = 1000;
 
@@ -215,7 +222,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 		logger.trace("Path time " + t + " exceeds " + TMAX);
 		return true;
 	    }
-	    if ((t > 100*TMAX) && useModulo) {
+	    if ((t > rho*TMAX) && useModulo) {
 		logger.trace("Path time " + t + " exceeds " + (100*TMAX));
 		return true;
 	    }
@@ -241,6 +248,13 @@ public class DynamicBinaryWeightedSSA extends Command {
 	double[]   pathTimeSamples    = new double[numModuloSamples];
 	double[]   sampleWeight       = new double[numModuloSamples];
 
+	double totalDwellTime = dwellTimes.stream().mapToDouble(Double::doubleValue).sum();
+
+	if (totalDwellTime < TMAX/gamma)
+	    return 1;
+	else if (totalDwellTime > TMAX*gamma)
+	    return 1;
+	
 	logger.trace("Modulo: dwellTimes = " + dwellTimes.toString());
 	
 	Random random = new Random();
@@ -340,7 +354,8 @@ public class DynamicBinaryWeightedSSA extends Command {
 	double sigma2 = 0;
 
 	ArrayList<Double> dwellTimes = new ArrayList<>();	
-
+	double simTime = 0.0;
+	
 	// Simulate a path step-by-step:
 	do {
 	    // Initialize variables:
@@ -428,6 +443,10 @@ public class DynamicBinaryWeightedSSA extends Command {
 		}
 	    }
 
+	    if (useModulo)
+		simTime = dwellTimes.stream().mapToDouble(Double::doubleValue).sum();
+	    else
+		simTime = sim.getTotalTimeForPath();
 	} while (!stoppingCondition(sim.getTotalTimeForPath(), path_probability));
     
 	if (indicatorFunction()) {
