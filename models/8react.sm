@@ -80,7 +80,7 @@ endmodule
 
 
 // Suppress R6 to shutoff the cycle
-label "constraint" = G_d=0;
+label "constraint" = true;//G_d=0;
 
 // Objective: G_bg reaches 50
 label "objective" = G_bg=50; 

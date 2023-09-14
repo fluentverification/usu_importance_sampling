@@ -33,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Option;
 
 import parser.ast.ModulesFile;
+import parser.ast.ConstantList;
 import parser.Values;
 
 import prism.Prism;
@@ -110,7 +111,7 @@ public class DynamicBinaryWeightedSSA extends Command {
 	private int constraintIndex;
 	private int objectiveIndex;
 	private RandomNumberGenerator rng = new RandomNumberGenerator();
-	private Dictionary predilections = new Hashtable();
+        private Hashtable<String,Double> predilections = new Hashtable<String,Double>();
 
 	@Override
 	public int exec() throws IOException, PrismException {
@@ -194,6 +195,17 @@ public class DynamicBinaryWeightedSSA extends Command {
 			prism.loadModelIntoSimulator();
 			sim = prism.getSimulator();
 			info = prism.getModelGenerator();
+			
+			Values clist = modulesFile.getConstantValues();
+			
+			for (int i=0; i<clist.getNumValues(); i++) {
+			    String cname = clist.getName(i);
+			    if (cname.startsWith(new String("delta"))) {
+				String rname = new String("["+cname.substring(5)+"]");
+				predilections.put(rname,(Double)clist.getValue(i));
+				logger.trace("Predilection for " + rname + " = " + (Double)clist.getValue(i));			    }
+			}
+			
 			// constraintIndex = info.getLabelIndex("constraint");
 			// objectiveIndex = info.getLabelIndex("objective");
 			// logger.trace("Constraint " + constraintIndex + "Objective " +
@@ -388,11 +400,15 @@ public class DynamicBinaryWeightedSSA extends Command {
 		    if (constraintSatisfied) {
 			double r = sim.getTransitionProbability(idx);
 			String s = sim.getTransitionActionString(idx);
+			logger.trace("Action string " + s);
 			if (s != null) {
 			    
 			    Double delta = (Double) predilections.get(s);
-			    if (delta != null) {
-				r = r * delta;				
+			    if ( delta != null ) {
+				logger.trace("Applying delta " + delta.toString() + " to " + s);
+				if (delta != null) {
+				    r = r * delta;				
+				}
 			    }
 			}
 			transitionRates.add(r);
