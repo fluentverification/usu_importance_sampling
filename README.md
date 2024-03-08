@@ -27,13 +27,8 @@
 # Java importance sampling experiments
 
 These simulations use the PRISM model checker engine to 
-simulate Markov models. Path generation is managed to 
-implement various experiments with importance sampling, 
-importance splitting, and related techniques. A brief
-introduction to importance sampling can be found
-[here](docs/importance_sampling_models.md).
+simulate Markov models. 
 
-<br>
 
 # Build Instructions
 
@@ -80,7 +75,7 @@ Tested on Ubuntu 20 *WSL* and Centos 7
  | `-vvv` | Verbose logging (Trace level) |
  | `--quiet` | Suppress logging to console, except for errors |
 
-## Scaffold Importance Sampling
+## Stochastic Simulation
 
 | Usage: | `./bin/run.sh simulate [OPTION]...` |
 |-|-|
@@ -90,26 +85,6 @@ Tested on Ubuntu 20 *WSL* and Centos 7
 | `--raw` | Print raw output values, no labels |
 | `--model` | Prism model file name |
 
-## Model Generator (MGen)
-| Usage: | `./bin/run.sh mgen <mgenID> [OPTION]...` |
-|-|-|
-| `mgenID` | The model generator to use (`sparse` or `multi-target`) |
-| `-I` | Number of models to generate, iterations. (default: 1) |
-| `-N` | Number of states to generate (default: 10) |
-| `--target-state` | Index of the target state, zero indexed (default: `numberOfState`-1)
-| `--output` | Name of the output Prism file (default: `sparse-model-%i%.pm`)
-| `--config` | Model generator json config file. See [example](#example-model-generator-config-file) below
-
-<br>
-
-## Multi-target Model Generator
- Usage: | `./bin/run.sh mgen multi-target [OPTION]...` |
-|-|-|
-| `--target-list`  | List of states that paths will terminate in, must placed in a comma-separated string (ex. `"1 4 2"`). Automatically adds state specified by `--target-state`. Cannot be used with `--absorb`.  |
-| `--absorb` | Creates an absorbing state that all states not on the target path will go to in one step. Cannot be used with `--target-list`. |
-| `--simple` | Generate only target paths |
-
-<br>
 
 The absolute path to `/.bin/run.sh` could be added to the user or system path
 as a symlink `imsam` if desired. Later version may have an install option to

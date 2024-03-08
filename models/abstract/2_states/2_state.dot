@@ -1,3 +1,0 @@
-digraph two_state {
-  1 -> 2
-}

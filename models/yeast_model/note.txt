@@ -1,5 +1,0 @@
-NOTE:
-
-This model was tested first (yielding result1_yeast1) using Ken McMillan's version of IVy that neither finds the shortest path nor uses abstraction.
-
-Landon's version of IVy will be tested next.

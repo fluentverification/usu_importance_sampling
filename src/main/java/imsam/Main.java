@@ -16,8 +16,6 @@ import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
 
-import imsam.mgen.MGenCommand;
-
 
 public class Main extends Command {
 
@@ -40,9 +38,7 @@ public class Main extends Command {
 
     @Argument(required=true,index=0,metaVar="command",usage="subcommand (use --help option with subcommand for more information)",handler=SubCommandHandler.class)
     @SubCommands({
-        @SubCommand(name="mgen",impl=MGenCommand.class),
-        @SubCommand(name="simulate",impl=ScaffoldImportanceSampling.class),
-        @SubCommand(name="dbwSSA",impl=DynamicBinaryWeightedSSA.class),
+        @SubCommand(name="simulate",impl=ExtendedWSSA.class),
     })
     protected Command command;
 

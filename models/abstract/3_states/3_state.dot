@@ -1,4 +1,0 @@
-digraph three_state {
-  1 -> {2 3}
-  2 -> {1 3}
-}
