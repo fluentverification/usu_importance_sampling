@@ -66,7 +66,7 @@ public class ExtendedWSSA extends Command {
     public boolean useModulo = false;
 
     @Option(name = "--rho", usage = "Stopping time parameter for 'modulo' heuristic.")
-    public double rho = 10;
+    public double rho = 100;
 
     @Option(name = "--gamma", usage = "Stretch parameter for 'modulo' heuristic.")
     public double gamma = 100;
@@ -224,7 +224,7 @@ public class ExtendedWSSA extends Command {
 	    return true;
 	}
 	if ((t > rho*TMAX) && useModulo) {
-	    logger.trace("Path time " + t + " exceeds " + (100*TMAX));
+	    logger.trace("Path time " + t + " exceeds " + (rho*TMAX));
 	    return true;
 	}
 	if (indicatorFunction())

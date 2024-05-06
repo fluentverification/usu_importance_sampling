@@ -37,7 +37,7 @@ read t
 
 clear
 
-./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.1 --Nruns 10000 
+./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 100000 
 
 printf "[Press Return]\n\n"
 read t
@@ -50,6 +50,6 @@ printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
-./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.1 --Nruns 1000 --modulo --numModuloSamples 100
+./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 1000 --modulo --numModuloSamples 100 
 
 

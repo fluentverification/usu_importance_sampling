@@ -3,7 +3,7 @@ ctmc
 const double k1=1.0;
 const double k2=1.0;
 const double k3=1.0;
-const double T=0.1;
+const double T=0.2;
 
 module birth
   x : [0..3] init 0;

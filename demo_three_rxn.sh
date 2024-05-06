@@ -37,7 +37,7 @@ read t
 
 clear
 
-./bin/run.sh dbwSSA --model models/three_rxn/three_rxn.pm --Tmax 1 --Nruns 100000 
+./bin/run.sh simulate --model models/three_rxn/three_rxn.pm --Tmax 1 --Nruns 100000 
 
 printf "[Press Return]\n\n"
 read t
@@ -50,7 +50,7 @@ printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
-./bin/run.sh dbwSSA --model models/three_rxn/three_rxn.pm --Tmax 1 --Nruns 10000 --modulo --numModuloSamples 100
+./bin/run.sh simulate --model models/three_rxn/three_rxn.pm --Tmax 1 --Nruns 10000 --modulo --numModuloSamples 100
 
 
 printf "[Press Return]\n\n"
@@ -64,7 +64,7 @@ printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
-./bin/run.sh dbwSSA --model models/three_rxn/three_rxn_constrained.pm --Tmax 1 --Nruns 10000 
+./bin/run.sh simulate --model models/three_rxn/three_rxn_constrained.pm --Tmax 1 --Nruns 10000 
 
 printf "[Press Return]\n\n"
 read t
@@ -77,6 +77,6 @@ printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
-./bin/run.sh dbwSSA --model models/three_rxn/three_rxn_constrained.pm --Tmax 1 --Nruns 1000 --modulo --numModuloSamples 100
+./bin/run.sh simulate --model models/three_rxn/three_rxn_constrained.pm --Tmax 1 --Nruns 1000 --modulo --numModuloSamples 100
 
 
