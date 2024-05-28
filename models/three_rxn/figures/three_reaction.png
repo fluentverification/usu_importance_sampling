@@ -1,0 +1,27 @@
+\documentclass{article}
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,shapes.geometric,shapes.symbols,arrows,intersections,calc,decorations,}
+%\usepackage{tkz-euclide}
+%\usetkzobj{all} 
+\pagestyle{empty}
+\usepackage{xspace}
+
+\usepackage[american,old voltage direction,siunitx]{circuitikz}
+\ctikzset{bipoles/length=1cm}
+\ctikzset{nodes width=0.075}
+\ctikzset{tripoles/american nand port/circle width=0.25}
+\ctikzset{tripoles/pmos style/emptycircle}
+
+\usepackage{pgfplots}
+
+\usepackage[active,tightpage]{preview}
+\PreviewEnvironment[]{tikzpicture}
+\PreviewEnvironment[]{tabular}
+
+
+\begin{document}
+
+\end{document}

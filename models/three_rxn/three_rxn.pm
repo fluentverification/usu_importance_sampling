@@ -6,7 +6,7 @@ const double k3=0.05;
 const double T=1;
 
 const int maxSpecies=100;
-const int maxConstraint=100;
+const int maxConstraint=3;
 
 module RXN
     a : [0..maxSpecies] init 0;
