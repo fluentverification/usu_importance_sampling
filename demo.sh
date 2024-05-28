@@ -9,7 +9,7 @@ printf "=========================================\n"
 printf "[Press Return]\n\n"
 read t
 
-prism models/birth_process/birth_process.pm models/birth_process/birth_process.csl
+time prism models/birth_process/birth_process.pm models/birth_process/birth_process.csl
 
 printf "[Press Return]\n\n"
 read t
@@ -22,7 +22,7 @@ printf "=========================================\n"
 printf "[Press Return]\n\n"
 read t
 
-prism -sim models/birth_process/birth_process.pm models/birth_process/birth_process.csl
+time prism -sim models/birth_process/birth_process.pm -simsamples 10000 -simconf 0.01 models/birth_process/birth_process.csl
 
 printf "[Press Return]\n\n"
 read t
@@ -30,14 +30,14 @@ read t
 clear
 
 printf "===============================================\n"
-printf "  Simulating Pure Birth Process with SSA\n  10,000 runs\n"
+printf "  Simulating Pure Birth Process with SSA\n  1,000 runs\n"
 printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
 clear
 
-./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 100000 
+time ./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 10000 
 
 printf "[Press Return]\n\n"
 read t
@@ -45,11 +45,11 @@ read t
 clear
 
 printf "===============================================\n"
-printf "  Simulating Pure Birth Process with Modulo-SSA\n  1,000 paths\n  100 samples per successful path\n"
+printf "  Simulating Pure Birth Process with Modulo-SSA\n  100 paths\n  100 samples per successful path\n"
 printf "================================================\n"
 printf "[Press Return]\n\n"
 read t
 
-./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 1000 --modulo --numModuloSamples 100 
+time ./bin/run.sh simulate --model models/birth_process/birth_process.pm --Tmax 0.2 --Nruns 100 --modulo --numModuloSamples 100 
 
 

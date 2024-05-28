@@ -133,7 +133,7 @@ public class ExtendedWSSA extends Command {
 	    double squareTerm = (double) samples.get(n) - mean;
 	    squareSum += squareTerm * squareTerm;
 	}
-	double variance = squareSum / ((double) Nruns * ((double) Nruns - 1));
+	double variance = squareSum / ((double) Nruns - 1.0);
 	if (raw) {
 	    logger.log(Main.LOG_ALWAYS,
 		       mean + "\t" +
